@@ -4,7 +4,7 @@ MPI+CUDA parallel raster Library (mcPRL) is a C++ programming framework based on
 
 <b>1. To Compile</b> <br>
 ===============================
-NNote: this version is not a final release, and some components are still under testsing. The program has been tested on a cluster with four Linux computing nodes (Centos7.0) and eight GPUs, compiled using g++ 4.8.5, OpenMPI 2.1.1,CUDA9.0,GDAL 1.9, and LibTIFF 4.0.9. The makefile (i.e., make_pAspect) will compile a demonstration program, pAspect, which is able to calculate aspect and slope from DEM data in parallel. <br>
+Note: this version is not a final release, and some components are still under testsing. The program has been tested on a cluster with four Linux computing nodes (Centos7.0) and eight GPUs, compiled using g++ 4.8.5, OpenMPI 2.1.1,CUDA9.0,GDAL 1.9, and LibTIFF 4.0.9. The makefile (i.e., make_pAspect) will compile a demonstration program, pAspect, which is able to calculate aspect and slope from DEM data in parallel. <br>
 (1) Before compiling, make sure MPI, GDAL,CUDA and LibTIFF libraries have been installed. <br>
 (2) Open <b>make_ mcSTARFM</b> and modify the lines that specify the locations of libraries. <br>
 (3) Type 'make -f make_mcSTARFM depend'.<br>
@@ -22,7 +22,7 @@ After successful compilation, an executable file named <b>mcSTARFM</b> will be g
 
 <b>3. To Run</b>
 ===============================
-+<b>3.1 Usage:</b><br>
+## <b>3.1 Usage:</b><br>
 mpirun -np \<num_proc\> -machinefile \<machinefile\> mcSTARFM \<workspace\> \<num-row-subspaces\> \<num-col-subspaces\> \<task-farming(1/0)\> \<io-option(0/1/2/3/4/5)\> \<with-writer(1/0)\>  <br>
 <b>machinefile</b>:Configuration files consisting of the pairs of node names and number of processes. The number of processes of a node corresponds to the number of GPUs available. If not,it can be used but there will be multiple processes using the same GPU or incomplete use of GPU computing resources, which will affect cluster efficiency.
 <b>workspace</b>: the directory where the input file is located and the output files will be written. <br>
