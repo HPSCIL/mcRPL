@@ -12,6 +12,7 @@ NNote: this version is not a final release, and some components are still under 
 After successful compilation, an executable file named <b>mcSTARFM</b> will be generated.
 
 <b>2. Key features of mcRPL</b>
+===============================
 <br>Supports a wide range of CUDA-enabled GPUs (https://developer.nvidia.com/cuda-gpus)
 <br>Supports a wide range of image formats (see http://gdal.org/formats_list.html)
 <br>Support multi-layer input of different data types
@@ -20,10 +21,10 @@ After successful compilation, an executable file named <b>mcSTARFM</b> will be g
 <br>Adaptive cyclic task assignment to achieve better load balance
 
 <b>3. To Run</b>
-
-
-<b>2.1 Usage:</b><br>
-mpirun -np \<num_proc\> pAspect \<workspace\> \<input-demFilename\> \<num-row-subspaces\> \<num-col-subspaces\> \<task-farming(1/0)\> \<io-option(0/1/2/3/4/5)\> \<with-writer(1/0)\>  <br>
+===============================
+<b>3.1 Usage:</b><br>
+mpirun -np \<num_proc\> -machinefile \<machinefile\> mcSTARFM \<workspace\> \<num-row-subspaces\> \<num-col-subspaces\> \<task-farming(1/0)\> \<io-option(0/1/2/3/4/5)\> \<with-writer(1/0)\>  <br>
+<b>machinefile</b>:Configuration files consisting of the pairs of node names and number of processes. The number of processes of a node corresponds to the number of GPUs available. If not,it can be used but there will be multiple processes using the same GPU or incomplete use of GPU computing resources, which will affect cluster efficiency.
 <b>workspace</b>: the directory where the input file is located and the output files will be written. <br>
 <b>input-demFilename</b>: the input file in the GeoTIFF format, usually the DEM data. <br>
 <b>num-row-subspaces</b>: the number of sub-domains in the Y axis, for domain decomposition. If num-row-subspaces > 1 and num-col-subspaces = 1, the domain is decomposed as row-wise; if num-row-subspaces = 1 and num-col-subspaces > 1, the domain is decomposed as column-wise; if both > 1, the domain is decomposed as block-wise. <br>
@@ -32,5 +33,16 @@ mpirun -np \<num_proc\> pAspect \<workspace\> \<input-demFilename\> \<num-row-su
 <b>io-option</b>: I/O option, ranges within [0, 5]. Option 0: GDAL-based centralized reading, no writing; Option 1: GDAL-based parallel reading, no writing; Option 2: pGTIOL-based parallel reading, no writing; Option 3: GDAL-based centralized reading and writing; Option 4: GDAL-based parallel reading and pseudo parallel writing; Option 5: pGTIOL-based parallel reading and parallel writing. <br>
 <b>with-writer</b>: an option that specify whether a writer process will be used. If 0, no writer; if 1, use a writer. <br>
 
-<b>2.2 Example:</b><br>
-mpirun -np 8 ./pAspect ./ nd_dem.tif 8 1 0 5 0 <br>
+<b>3.2 Example:</b><br>
+mpirun -np 6 -machinefile machinefile  mcSTARFM  ./ 6 1 0 2 0 <br>
+
+<b>machinefile</b>:
+<br>compute-0-0 slots=2
+<br>compute-0-0 slots=2
+<br>hpscil slots=2
+<br>    Note: The computational performance of mcPRL largely depends on the GPUs The more powerful is the GPUs the better performance. The more GPUs the better performance.
+
+<b>3.3 An example of programming with mcRPL:</b><br>
+To illustrate how to use mcRPL, a simple example is given in the following section.
+<br>In this example，there are two input layers and two output layers. The first output layer is the focal sum of the first input layer with a 3*3 neighborhood. The second output layer is the focal sum of the second input layer with a 3*3 neighborhood.
+<br>Implementing this algorithm includes the following three steps：
