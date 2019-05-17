@@ -33,7 +33,7 @@ mpirun -np \<num_proc\> -machinefile \<machinefile\> mcSTARFM \<workspace\> \<nu
 <b>io-option</b>: I/O option, ranges within [0, 5]. Option 0: GDAL-based centralized reading, no writing; Option 1: GDAL-based parallel reading, no writing; Option 2: pGTIOL-based parallel reading, no writing; Option 3: GDAL-based centralized reading and writing; Option 4: GDAL-based parallel reading and pseudo parallel writing; Option 5: pGTIOL-based parallel reading and parallel writing. <br>
 <b>with-writer</b>: an option that specify whether a writer process will be used. If 0, no writer; if 1, use a writer. <br>
 
-+<b>3.2 Example:</b><br>
+## <b>3.2 Example:</b><br>
 mpirun -np 6 -machinefile machinefile  mcSTARFM  ./ 6 1 0 2 0 <br>
 
 <b>machinefile</b>:
@@ -42,7 +42,8 @@ mpirun -np 6 -machinefile machinefile  mcSTARFM  ./ 6 1 0 2 0 <br>
 <br>hpscil slots=2
 <br>    Note: The computational performance of mcPRL largely depends on the GPUs The more powerful is the GPUs the better performance. The more GPUs the better performance.
 
-+<b>3.3 An example of programming with mcRPL:</b><br>
+## <b>3.3 An example of programming with mcRPL:</b><br>
 To illustrate how to use mcRPL, a simple example is given in the following section.
-<br>In this example，there are two input layers and two output layers. The first output layer is the focal sum of the first input layer with a 3*3 neighborhood. The second output layer is the focal sum of the second input layer with a 3*3 neighborhood.
-<br>Implementing this algorithm includes the following three steps：
+<br>In this example，there are two input layers and two output layers. The first output layer is the focal sum of the first input layer with a 3×3 neighborhood. The second output layer is the focal sum of the second input layer with a 3×3 neighborhood.
++ Implementing this algorithm includes the following three steps：
+   - Fisrt，You have to implement custom device functions based on the template of neighborhood computation.
