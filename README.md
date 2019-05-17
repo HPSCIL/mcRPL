@@ -80,4 +80,236 @@ public:
 Moore neighborhood ：MooreNbrLocs[16] = {-1, 0, -1, 1, 0, 1, 1, 1, 1, 0, 1, -1, 0, -1, -1, -1};
 ```
    - In the end，you must write a main function：
+```
+int main()
+{
+bool withWriter = 0;
+  pRPL::DataManager testDM;
+  if(!testDM.initMPI(MPI_COMM_WORLD, withWriter)) {
+    cerr << "Error: unable to initialize MPI" << endl;
+    return -1;
+  }
+string workspace,firstInName, secondInName, secondcorseFilename,secondfineFilename,secondfineFilename2;
+workspace.assign("D:\\data\\newdata\\");
+  firstInName.assign("D:\\data\\newdata\\2009-329-flaash.dat"); 
+  secondInName.assign("D:\\data\\newdata\\MODO9A1.A2009329-0.dat"); 
+  int nRowSubspcs =3;
+  int nColSubspcs = 1;
+  bool taskFarming =0;
+  int ioOption =3;
+  pRPL::ReadingOption readOpt;
+  pRPL::WritingOption writeOpt;
+  string sReadOpt, sWriteOpt;
+  switch(ioOption) {
+    case 0:
+      readOpt = pRPL::CENTDEL_READING;
+      writeOpt = pRPL::NO_WRITING;
+      sReadOpt = "CENTDEL_READING";
+      sWriteOpt = "NO_WRITING";
+      break;
+    case 1:
+      readOpt = pRPL::PARA_READING;
+      writeOpt = pRPL::NO_WRITING;
+      sReadOpt = "PARA_READING";
+      sWriteOpt = "NO_WRITING";
+      break;
+    case 2:
+      readOpt = pRPL::PGT_READING;
+      writeOpt = pRPL::NO_WRITING;
+      sReadOpt = "PGT_READING";
+      sWriteOpt = "NO_WRITING";
+      break;
+    case 3:
+      readOpt = pRPL::CENTDEL_READING;
+      writeOpt = pRPL::CENTDEL_WRITING;
+      sReadOpt = "CENTDEL_READING";
+      sWriteOpt = "CENTDEL_WRITING";
+      break;
+    case 4:
+      readOpt = pRPL::PARA_READING;
+      writeOpt = pRPL::PARADEL_WRITING;
+      sReadOpt = "PARA_READING";
+      sWriteOpt = "PARADEL_WRITING";
+      break;
+    case 5:
+      readOpt = pRPL::PGT_READING;
+      writeOpt = pRPL::PGTDEL_WRITING;
+      sReadOpt = "PGT_READING";
+      sWriteOpt = "PGTDEL_WRITING";
+      break;
+    default:
+      cerr << "Error: invalid ioOption (" << ioOption << ")" << endl;
+      return -1;
+  }
+double timeStart, timeInit, timeCreate, timeRead, timeEnd;
+  testDM.mpiPrc().sync();
+  if(testDM.mpiPrc().isMaster()) {
+    //cout << "-------- Start --------" << endl;
+    timeStart = MPI_Wtime();
+  }
+pRPL::Layer *fisrtIn = NULL;
+  pRPL::Layer *secondIn = NULL;
+  if(readOpt == pRPL::PGT_READING) {
+    fisrtIn = testDM.addLayerByPGTIOL("firstfine", firstInName.c_str(), 3, true);
+	secondIn = testDM.addLayerByPGTIOL("secondcorse", secondcorseFilename.c_str(), 1, true);
+  }
+  else {
+    fisrtIn = testDM.addLayerByGDAL("firstfine", firstInName.c_str(), 3, true);
+	secondIn = testDM.addLayerByGDAL("secondcorse",  secondcorseFilename.c_str(), 1, true);
+  }
+  const pRPL::SpaceDims &glbDims = *(fisrtIn->glbDims());
+  const pRPL::CellspaceGeoinfo *pGlbGeoinfo = fisrtIn->glbGeoinfo();
+  long tileSize = fisrtIn->tileSize();
+  
+  pRPL::Layer *firstOut = testDM.addLayer("secondfine");
+  pRPL::Layer *firstOut2 = testDM.addLayer("secondfine2");
+ firstOut->initCellspaceInfo(glbDims, typeid( int).name(), sizeof( int), pGlbGeoinfo, tileSize);
+ firstOut2->initCellspaceInfo(glbDims, typeid( int).name(), sizeof( int), pGlbGeoinfo, tileSize);
+
+  //pRPL::Layer *pAspLyr = testDM.addLayer("ASP");
+ // pAspLyr->initCellspaceInfo(glbDims, typeid(float).name(), sizeof(float), pGlbGeoinfo, tileSize);
+  
+  // Add a 3X3 Neighborhood to the DataManager
+  pRPL::Neighborhood* pNbrhd31x31 = testDM.addNbrhd("Moore31x31");
+  pNbrhd31x31->initMoore(3, 1.0, pRPL::CUSTOM_VIRTUAL_EDGES, 0);
+
+  // Declare a Transition
+  pRPL::Transition aspTrans;
+ // aspTrans.scale(1.0);
+  aspTrans.setNbrhdByName(pNbrhd31x31->name());
+  //aspTrans.setNbrhd();
+  aspTrans.addInputLyr(fisrtIn->name(), false);
+  aspTrans.addInputLyr(secondIn->name(), false);
+  aspTrans.addOutputLyr(firstOut->name(),true);
+  aspTrans.addOutputLyr(firstOut2->name(),true);
+  //aspTrans.addOutputLyr(pAspLyr->name(), true);
+  
+  // Decompose the Layers
+  cout << testDM.mpiPrc().id() << ": decomposing Cellspaces...." << endl;
+  if(!testDM.dcmpLayers(aspTrans, nRowSubspcs, nColSubspcs)) {
+    testDM.mpiPrc().abort();
+    return -1;
+  }
+  
+  cout << testDM.mpiPrc().id() << ": decomposed Cellspaces...." << endl;
+  testDM.mpiPrc().sync();
+  if(testDM.mpiPrc().isMaster()) {
+    timeInit = MPI_Wtime();
+  }
+// Create the output datasets
+  if(writeOpt != pRPL::NO_WRITING) {
+    char nPrcs[10]; sprintf(nPrcs, "%d", testDM.mpiPrc().nProcesses());
+    secondfineFilename.assign(workspace + "test_" + "TEST_"+nPrcs + ".tif");
+	secondfineFilename2.assign(workspace + "test2_" + "TEST_"+nPrcs + ".tif");
+    //aspectFilename.assign(workspace + "asp_" +"TEST_"+ nPrcs + ".tif");
+    if(writeOpt == pRPL::PGTDEL_WRITING) {
+		if(!testDM.createLayerPGTIOL(firstOut->name(), secondfineFilename.c_str(), NULL) ) {
+        testDM.mpiPrc().abort();
+        return -1;
+      }
+		if(!testDM.createLayerPGTIOL(firstOut2->name(), secondfineFilename2.c_str(), NULL) ) {
+        testDM.mpiPrc().abort();
+        return -1;
+      }
+    }
+    else {
+      if(!testDM.createLayerGDAL(firstOut->name(), secondfineFilename.c_str(), "GTiff", NULL) ) {
+        testDM.mpiPrc().abort();
+        return -1;
+      }
+	  if(!testDM.createLayerGDAL(firstOut2->name(), secondfineFilename2.c_str(), "GTiff", NULL) ) {
+        testDM.mpiPrc().abort();
+        return -1;
+      }
+    }
+  }
+  pRPL::pCuf pf;
+  pf=&pRPL::Transition::cuFocalMutiOperator<testFocal>;
+  //pf=&pRPL::Transition::cuLocalOperator<Copy>;
+  //  pf=&pRPL::Transition::cuFocalOperator<short,float, float,SlopeMPI>;
+ // InitCUDA(testDM.mpiPrc().id()); 
+  testDM.mpiPrc().sync();
+  if(testDM.mpiPrc().isMaster()) {
+    timeCreate = MPI_Wtime();
+  }
+  if(taskFarming) {
+    // Initialize task farming
+    //cout << testDM.mpiPrc().id() << ": initializing task farm...." << endl;
+    int nSubspcs2Map = withWriter ? 2*(testDM.mpiPrc().nProcesses()-2) : 2*(testDM.mpiPrc().nProcesses()-1);
+    if(!testDM.initTaskFarm(aspTrans, pRPL::CYLC_MAP, nSubspcs2Map, readOpt)) {
+      return -1;
+    }
+
+    testDM.mpiPrc().sync();
+    if(testDM.mpiPrc().isMaster()) {
+      timeRead = MPI_Wtime();
+    }
+	
+    // Task farming
+    //cout << testDM.mpiPrc().id() << ": task farming...." << endl;
+	if(testDM.evaluate_TF(pRPL::EVAL_ALL, aspTrans, readOpt, writeOpt,NULL, false, false) != pRPL::EVAL_SUCCEEDED) {
+      return -1;
+    }
+  }
+  else {
+    //cout << testDM.mpiPrc().id() << ": initializing static tasking...." << endl;
+    if(!testDM.initStaticTask(aspTrans, pRPL::CYLC_MAP, readOpt)) {
+      return -1;
+    }
+
+    testDM.mpiPrc().sync();
+    //if(testDM.mpiPrc().isMaster()) {
+    //  timeRead = MPI_Wtime();
+    //}
+
+    //cout << testDM.mpiPrc().id() << ": static tasking...." << endl;
+	if(testDM.evaluate_ST(pRPL::EVAL_ALL, aspTrans, writeOpt,true, pf,false) != pRPL::EVAL_SUCCEEDED) {
+      return -1;
+    }
+  }
+  
+  //cudaMemcpy(pAtest_host,d_data,sizeof(int)*20,cudaMemcpyDeviceToHost);
+ // cout<<pAtest_host[10]<<endl;
+  // Save the output data
+  testDM.closeDatasets();
+
+  // Record the end time, log computing time
+  testDM.mpiPrc().sync();
+
+  if(testDM.mpiPrc().isMaster()) {
+    //cout << "-------- Completed --------" << endl;
+    timeEnd = MPI_Wtime();
+
+    ofstream timeFile;
+    string timeFilename(workspace + "test_time.csv");
+    timeFile.open(timeFilename.c_str(), ios::app);
+    if(!timeFile) {
+      cerr << "Error: unable to open the time log file" << endl;
+    }
+	timeFile << firstInName << "," \
+		<< secondInName << "," \
+		<< secondcorseFilename<< "," \
+		<< secondfineFilename<< "," \
+        << testDM.mpiPrc().nProcesses() << "," \
+        << (withWriter?"WITH_WRITER":"NO_WRITER") << "," \
+        << nRowSubspcs << "," \
+        << nColSubspcs << "," \
+        << (taskFarming?"TF":"ST") << "," \
+        << sReadOpt << "," \
+        << sWriteOpt << "," \
+        << timeInit - timeStart << "," \
+        << timeCreate - timeInit << "," \
+        << timeRead - timeCreate << "," \
+        << timeEnd - timeRead << "," \
+        << timeEnd - timeStart << "," \
+        << endl;
+    timeFile.close();
+    //cout << testDM.ownershipMap() << endl;
+  }
+  // Finalize MPI
+  testDM.finalizeMPI();
+  return 0;
+}
+```
+
 
