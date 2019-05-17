@@ -47,3 +47,30 @@ To illustrate how to use mcRPL, a simple example is given in the following secti
 <br>In this example，there are two input layers and two output layers. The first output layer is the focal sum of the first input layer with a 3×3 neighborhood. The second output layer is the focal sum of the second input layer with a 3×3 neighborhood.
 + Implementing this algorithm includes the following three steps：
    - Fisrt，You have to implement custom device functions based on the template of neighborhood computation.
+   ```
+   class testFocal
+{
+public:
+	__device__ void operator()(void **focalIn,int *DataInType,void **focalOut,int *DataOutType,int nIndex,nbrInfo<double>nbrinfo,rasterInfo rasterinfo)
+	{
+		int nbrsize = nbrinfo.nbrsize;
+		int* nbrcood = nbrinfo.nbrcood;
+		int nwidth = rasterinfo.width;
+		int nheight = rasterinfo.height;
+		int nrow=nIndex/nwidth;
+		int ncolumn=nIndex%nwidth;
+		int nbrIndex=nIndex;
+		short sum1=0;
+		int sum2=0;
+		long dim=nwidth*nheight;
+		for(int i = 0; i < nbrsize; i++)
+		{
+			nbrIndex+=nbrcood[i * 2] + nbrcood[i * 2 + 1] * nwidth;
+			sum1+=cuGetDataAs<int>(nbrIndex,0,focalIn,DataInType[0],dim);
+			sum2+=cuGetDataAs<int>(nbrIndex,1,focalIn,DataInType[1],dim);
+		}
+		cuupdateCellAs<short>(nIndex,0,focalOut,DataOutType[0],dim,sum1);
+		cuupdateCellAs<int>(nIndex,1,focalOut,DataOutType[1],dim,sum2);
+	}
+};
+```
