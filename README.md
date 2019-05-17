@@ -47,7 +47,7 @@ To illustrate how to use mcRPL, a simple example is given in the following secti
 <br>In this example，there are two input layers and two output layers. The first output layer is the focal sum of the first input layer with a 3×3 neighborhood. The second output layer is the focal sum of the second input layer with a 3×3 neighborhood.
 + Implementing this algorithm includes the following three steps：
    - Fisrt，You have to implement custom device functions based on the template of neighborhood computation.
-   ```
+ ```
    class testFocal
 {
 public:
@@ -74,3 +74,8 @@ public:
 	}
 };
 ```
+   - second Specify a neighborhood.In this example, Moore neighborhood which is a 3*3 neighborhood is used.
+    ```
+    Moore neighborhood ：MooreNbrLocs[16] = {-1, 0, -1, 1, 0, 1, 1, 1, 1, 0, 1, -1, 0, -1, -1, -1};
+   - In the end，you must write a main function：
+
