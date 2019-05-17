@@ -76,7 +76,8 @@ public:
 ```
    - second Specify a neighborhood.In this example, Moore neighborhood which is a 3*3 neighborhood is used.
    
-    ```
-    Moore neighborhood ：MooreNbrLocs[16] = {-1, 0, -1, 1, 0, 1, 1, 1, 1, 0, 1, -1, 0, -1, -1, -1};
+```
+Moore neighborhood ：MooreNbrLocs[16] = {-1, 0, -1, 1, 0, 1, 1, 1, 1, 0, 1, -1, 0, -1, -1, -1};
+```
    - In the end，you must write a main function：
 
