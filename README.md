@@ -3,6 +3,7 @@ With the development of GPGPU, GPU has natural support and efficient performance
 MPI+CUDA parallel raster Library (mcPRL) is a C++ programming framework based on MPI+CUDA. It provides an easy-to-use interface to call multiple GPUs to simultaneously calculate parallel raster/image process. Using this framework, users can easily write efficient parallel algorithms for multi-GPU computing without knowing much about parallel computing.
 
 <b>1. To Compile</b> <br>
+===============================
 NNote: this version is not a final release, and some components are still under testsing. The program has been tested on a cluster with four Linux computing nodes (Centos7.0) and eight GPUs, compiled using g++ 4.8.5, OpenMPI 2.1.1,CUDA9.0,GDAL 1.9, and LibTIFF 4.0.9. The makefile (i.e., make_pAspect) will compile a demonstration program, pAspect, which is able to calculate aspect and slope from DEM data in parallel. <br>
 (1) Before compiling, make sure MPI, GDAL,CUDA and LibTIFF libraries have been installed. <br>
 (2) Open <b>make_ mcSTARFM</b> and modify the lines that specify the locations of libraries. <br>
