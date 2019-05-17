@@ -10,8 +10,8 @@ NNote: this version is not a final release, and some components are still under 
 (4)  Type 'make -f make_mcSTARFM to compile. <br>
 After successful compilation, an executable file named <b>mcSTARFM</b> will be generated.
 
-<b>2. To Run</b><br>
-There is a <b>nd_dem.tif</b> file, which is the DEM data at 1.5km resolution of North Dakota in the US. Note that this data is only for testing if the pAspect program works as expected, not for demonstrating the performance. <br>
+<b>2. Key features of mcRPL</b><br>
+<br>Supports a wide range of CUDA-enabled GPUs (https://developer.nvidia. com/cuda-gpus)</br>
 
 <b>2.1 Usage:</b><br>
 mpirun -np \<num_proc\> pAspect \<workspace\> \<input-demFilename\> \<num-row-subspaces\> \<num-col-subspaces\> \<task-farming(1/0)\> \<io-option(0/1/2/3/4/5)\> \<with-writer(1/0)\>  <br>
