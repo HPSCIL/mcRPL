@@ -11,11 +11,11 @@ NNote: this version is not a final release, and some components are still under 
 After successful compilation, an executable file named <b>mcSTARFM</b> will be generated.
 
 <b>2. Key features of mcRPL</b><br>
-<br>Supports a wide range of CUDA-enabled GPUs (https://developer.nvidia.com/cuda-gpus)</br>
-<br>Supports a wide range of image formats (see http://gdal.org/formats_list.html)</br>
-<br>Support multi-layer input of different data types</br>
-<br>Supporting arbitrary neighborhoods</br>
-<br>Adaptive Cluster GPU Environment，Allocate appropriate GPUs to processes.</br>
+<br>Supports a wide range of CUDA-enabled GPUs (https://developer.nvidia.com/cuda-gpus)
+<br>Supports a wide range of image formats (see http://gdal.org/formats_list.html)
+<br>Support multi-layer input of different data types
+<br>Supporting arbitrary neighborhoods
+<br>Adaptive Cluster GPU Environment，Allocate appropriate GPUs to processes.
 <br>Adaptive cyclic task assignment to achieve better load balance</br>
 <b>3. To Run</b>
 
