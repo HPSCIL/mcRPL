@@ -286,7 +286,6 @@ namespace pRPL {
       vector<MPI_Request> _vRecvSpcReqs;
       pRPL::TransferInfoVect _vRecvSpcInfos;
       pRPL::IntVect _vEvaledSubspcIDs;
-
       pRPL::ExchangeMap _mSendRoutes;
       pRPL::ExchangeMap _mRecvRoutes;
       map<int, pRPL::CellStream> _mSendCells;

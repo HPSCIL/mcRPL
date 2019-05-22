@@ -18,7 +18,7 @@ namespace pRPL {
       void abort() const;
       void finalize() const;
       void sync() const;
-
+	  DeviceProcessor getDeive();
       bool set(MPI_Comm &comm,
                bool hasWriter = false,
                int groupID = -1);

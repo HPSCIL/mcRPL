@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include"prplcuda.h"
-#include "FocalOperatorDevice.h"
+#include "OperatorDevice.h"
 //#include"cuLogisticCA.h"
 using namespace std;
 

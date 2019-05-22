@@ -24,7 +24,11 @@ void pRPL::Process::
 sync() const {
   MPI_Barrier(_comm);
 }
-
+DeviceProcessor pRPL::Process::
+getDeive()
+{
+   return _device;
+}
 const MPI_Comm& pRPL::Process::
 comm() const {
   return _comm;
@@ -141,12 +145,14 @@ bool pRPL::Process::initCuda()
 		itdevcount=mstrdevcount.begin();
 		for(itmstr=mstr.begin();itmstr!=mstr.end();itmstr++)
 		{
-			cout<<itmstr->first<<"进程为:";
+		     int nMasterDevice=0; 
+			cout<<itmstr->first<<" has process :";
 			pRPL::IntVect vnPoID=itmstr->second;
 			pRPL::IntVect vnPoID2=itdevcount->second;
-			for(int i=0;i<vnPoID.size();i++)
+			int nPo=vnPoID.size();
+			for(int i=0;i<nPo;i++)
 			{
-				cout<<vnPoID[i];
+				cout<<vnPoID[i]<<" ";
 				int nSend=i%vnPoID2.size();
 				if(vnPoID[i]!=0)
 				{
@@ -154,14 +160,23 @@ bool pRPL::Process::initCuda()
 				}
 				else
 				{
+				    
 					_device.setDeviceID(vnPoID2[nSend]);
+					nMasterDevice=nSend;
+					_device.setdevice();
+
+				}
+				if(i==(nPo-1))
+				{
+				cout<<endl;
+				cout<<" the device of process 0"<<" uses is:"<<_prcrName.c_str()<<" "<<nMasterDevice<<endl;  
 				}
 			}
 			cout<<endl;
-			cout<<itmstr->first<<"设备为:";
+			cout<<"the devices IDs of the  node "<<itmstr->first<<" has:";
 			for(int i=0;i<vnPoID2.size();i++)
 			{
-				cout<<vnPoID2[i];
+				cout<<vnPoID2[i]<<" ";
 			}
 			cout<<endl;
 			itdevcount++;
@@ -177,7 +192,7 @@ bool pRPL::Process::initCuda()
 		MPI_Send(&_device.allDevice()[0],nCount,MPI_INT,0,3*_id,_comm);
 		int nRecv;
 		MPI_Recv(&nRecv,1,MPI_INT,0,4*_id,_comm,&status);
-		cout<<"进程"<<_id<<"的设备为:"<<name<<" "<<nRecv; 
+		cout<<" the device of process "<<_id<<" uses is:"<<name<<" "<<nRecv<<endl; 
 		_device.setDeviceID(nRecv);
 		_device.setdevice();
 	}

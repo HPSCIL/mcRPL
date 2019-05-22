@@ -9,9 +9,8 @@
 //#include"CuPRL.h"
 //#include "FocalCodeOperator.h"
 //#include"prpl-transition.h"
-#include "FocalOperatorDevice.h"
+#include "OperatorDevice.h"
 #include "LocalOperatorDevice.h"
-#include"ZonalCodeOperator.h"
 #include "CuPRL.h"
 namespace pRPL {
     
@@ -42,11 +41,13 @@ namespace pRPL {
       bool isOutLyr(const string &lyrName) const;
       bool isPrimeLyr(const string &lyrName) const;
       void clearLyrSettings();
-
+	  void setSMcount(int _sm);
       bool setCellspace(const string &lyrName,
                         pRPL::Cellspace *pCellspc);
       void clearCellspaces();
-
+	  bool initGlobalCoords(const vector<pRPL::CellCoord> &vGlobalCoords);
+	  bool initGlobalCoords(const vector<int> &vGlobalCoords);
+	   void clearGlobalCoords();
       pRPL::Cellspace* getCellspaceByLyrName(const string &lyrName);
       const pRPL::Cellspace* getCellspaceByLyrName(const string &lyrName) const;
 
@@ -77,9 +78,9 @@ namespace pRPL {
 	   pRPL::EvaluateReturn cuFocalMutiOperator(const pRPL::CoordBR &br);
 	   template<class OperType>
 	   pRPL::EvaluateReturn cuLocalOperator(const pRPL::CoordBR &br);
-	   template<class DataInType, class DataOutType, class OperType>
+	   template<class OperType>
 	   pRPL::EvaluateReturn cuZonelOperator(const pRPL::CoordBR &br);
-	    template<class DataInType, class DataOutType,  class OperType>
+	    template<class OperType>
 	   pRPL::EvaluateReturn cuGlobalOperator(const pRPL::CoordBR &br);
   public:
       pRPL::EvaluateReturn evalBR(const pRPL::CoordBR &br,bool isGPUCompute=NULL, pRPL::pCuf pf=NULL);
@@ -118,10 +119,11 @@ namespace pRPL {
       vector<string> _vInLyrNames;
       vector<string> _vOutLyrNames;
       map<string, pRPL::Cellspace*> _mpCellspcs;
-
+	  int _smCount;
       string _nbrhdName;
       pRPL::Neighborhood *_pNbrhd;
 	  vector<double> _vparamInfo;                                                   //2018/10/18
+	  vector<int>_globalCoords;
       bool _onlyUpdtCtrCell;
       bool _needExchange;
       bool _edgesFirst;
@@ -201,7 +203,7 @@ namespace pRPL {
 		//  checkCudaErrors(cudaMemcpy(pDataIn[i],pRrmSpc->getData<void>(),nwidth*nheight*pRrmSpc->info()->dataSize(),cudaMemcpyHostToDevice));
 		   pDataIn[i]=pRrmSpc->getGPUData();
 		   pDataInType[i]=pRrmSpc->info()->cudaTypeCopy();
-		   cout<< pDataInType[i]<<endl;
+	//	   cout<< pDataInType[i]<<endl;
 		   //checkCudaErrors(cudaMemcpy(pDataInType[i],pRrmSpc->info()->dataType(),strlen(pRrmSpc->info()->dataType())+1,cudaMemcpyHostToDevice));
 	  }
 	  for(int i=0;i<numOutRaster;i++)
@@ -213,7 +215,7 @@ namespace pRPL {
 		 // checkCudaErrors(cudaMalloc((void**)&pDataOutType[i],strlen(pRrmSpc->info()->dataType())+1));
 		 // checkCudaErrors(cudaMemcpy(pDataOutType[i],pRrmSpc->info()->dataType(),strlen(pRrmSpc->info()->dataType())+1,cudaMemcpyHostToDevice));
 		  pDataOutType[i]=pRrmSpc->info()->cudaTypeCopy();
-		  cout<< pDataOutType[i]<<endl;
+	//	  cout<< pDataOutType[i]<<endl;
 	  }
 	  checkCudaErrors(cudaMalloc(&d_pDataInType,sizeof(int)*numInRaster));
 	  checkCudaErrors(cudaMemcpy(d_pDataInType,pDataInType,sizeof(int)*numInRaster,cudaMemcpyHostToDevice));
@@ -229,9 +231,11 @@ namespace pRPL {
 	 // checkCudaErrors(cudaMemcpy(d_pDataOutType,pDataOutType,sizeof(void*)*numOutRaster,cudaMemcpyHostToDevice));
 	  checkCudaErrors(cudaMemcpy(d_nbrcoord,cucoords, sizeof(int)*nbrsize * 2, cudaMemcpyHostToDevice));
 	  checkCudaErrors( cudaMemcpy(d_weights, weights, sizeof(double)*nbrsize, cudaMemcpyHostToDevice));
-	  dim3 block(16,16);
-	  dim3 grid(nwidth% 16 == 0 ? nwidth /16 : nwidth / 16 + 1, nheight % 16 == 0 ? nheight /16 : nheight /16 + 1);
-	  G_FocalMutiOperator<OperType> <<< 256,256>>> (d_pDataIn,d_pDataInType, d_pDataOut, d_pDataOutType, brminIRow, brmaxIRow,brminICol, brmaxICol,nwidth, nheight,d_nbrcoord,d_weights,   nbrsize, cellWidth, cellHeight,d_paramInfo, OperType());
+	 // dim3 block(16,16);
+	 // dim3 grid(nwidth% 16 == 0 ? nwidth /16 : nwidth / 16 + 1, nheight % 16 == 0 ? nheight /16 : nheight /16 + 1);
+	  int block=256;
+	  int gird=_smCount*24;
+	  G_FocalMutiOperator<OperType> <<< gird,block>>> (d_pDataIn,d_pDataInType, d_pDataOut, d_pDataOutType, brminIRow, brmaxIRow,brminICol, brmaxICol,nwidth, nheight,d_nbrcoord,d_weights,   nbrsize, cellWidth, cellHeight,d_paramInfo, OperType());
 	  cudaDeviceSynchronize();
 	  
 	  for(int i=0;i<numOutRaster;i++)
@@ -277,31 +281,24 @@ namespace pRPL {
 	  return pRPL::EVAL_SUCCEEDED;
   }
 
-  template<class DataInType, class DataOutType,  class OperType>
+  template<class OperType>
   pRPL::EvaluateReturn pRPL::Transition::cuGlobalOperator(const pRPL::CoordBR &br)
   {
-
-	 vector<pRPL::WeightedCellCoord>coords =_pNbrhd->getInnerNbr(); 
-	  int nbrsize =_pNbrhd->size();
-	  double *d_weights;
-	  vector<int>cuNbrCoords;
-	  vector<double>cuNbrWeights;
 	  int brminIRow=br.minIRow();
 	  int brmaxIRow=br.maxIRow();
 	  int brminICol=br.minICol();
 	  int brmaxICol=br.maxICol();
-	  for(int iNbr = 0; iNbr < nbrsize; iNbr++)
-	  {
-		  /* if(coords[iNbr].iRow() == 0 && coords[iNbr].iCol() == 0 ) 
-		  {
-		  continue;
-		  }*/
-		  cuNbrCoords.push_back(coords[iNbr].iRow());
-		  cuNbrCoords.push_back(coords[iNbr].iCol());
-		  cuNbrWeights.push_back(coords[iNbr].weight());
-	  }
-	  int *cucoords = &cuNbrCoords[0];
-	  double *weights=&cuNbrWeights[0];
+
+	  //for(int iNbr = 0; iNbr < nbrsize; iNbr++)
+	  //{
+		 // /* if(coords[iNbr].iRow() == 0 && coords[iNbr].iCol() == 0 ) 
+		 // {
+		 // continue;
+		 // }*/
+		 // cuNbrCoords.push_back(coords[iNbr].iRow());
+		 // cuNbrCoords.push_back(coords[iNbr].iCol());
+		 // cuNbrWeights.push_back(coords[iNbr].weight());
+	  //}
 	  pRPL::Cellspace *pRrmSpc=getCellspaceByLyrName(getPrimeLyrName());
 	  double cellWidth =fabs(pRrmSpc->info()->georeference()->cellSize().x());
 	  double cellHeight =fabs(pRrmSpc->info()->georeference()->cellSize().y());
@@ -311,16 +308,33 @@ namespace pRPL {
 	  int numOutRaster=_vOutLyrNames.size();
 	  void **pDataIn=new void *[numInRaster];
 	  void **pDataOut=new void *[numOutRaster];
-	  char **pDataInType=new char *[numInRaster];
-	  char **pDataOutType=new char *[numOutRaster];
+	  int *pDataInType=new int[numInRaster];
+	  int *pDataOutType=new int[numOutRaster];
 	  void **d_pDataIn;
 	  void **d_pDataOut;
-	  char **d_pDataInType;
-	  char **d_pDataOutType;
-	  int *d_nbrcoord;
+	  int *d_pDataInType;
+	  int *d_pDataOutType;
 	  void **outdata=new void *[numOutRaster];
-	  checkCudaErrors(cudaMalloc(&d_nbrcoord, sizeof(int)*nbrsize * 2));
-	  checkCudaErrors(cudaMalloc(&d_weights, sizeof(double)*nbrsize));
+	  double* d_paramInfo;
+	  int *d_globalcoord;
+	   if(_vparamInfo.size()!=0)
+	  {
+		  checkCudaErrors(cudaMalloc(&d_paramInfo,sizeof(double)*_vparamInfo.size()));
+		  checkCudaErrors(cudaMemcpy(d_paramInfo,&_vparamInfo[0],sizeof(double)*_vparamInfo.size(),cudaMemcpyHostToDevice));
+	  }
+	  else
+	  {
+		  checkCudaErrors(cudaMalloc(&d_paramInfo,sizeof(double)));
+	  }
+	   if(_globalCoords.size()!=0)
+	   {
+		   checkCudaErrors(cudaMalloc(&d_globalcoord,sizeof(int)*_globalCoords.size()));
+		  checkCudaErrors(cudaMemcpy(d_globalcoord,&_globalCoords[0],sizeof(int)*_globalCoords.size(),cudaMemcpyHostToDevice));
+	   }
+	   else
+	   {
+		   checkCudaErrors(cudaMalloc(&d_globalcoord,sizeof(int)));
+	   }
 	 // checkCudaErrors(cudaMalloc(&d_Types, 40*numInRaster));
 	  for(int i=0;i<numInRaster;i++)
 	  {
@@ -329,10 +343,12 @@ namespace pRPL {
 		  pRrmSpc=getCellspaceByLyrName(getInLyrNames()[i]);
 		//  const char *strDataType=pRrmSpc->info()->dataType();
 		//  checkCudaErrors(cudaMalloc((void**)&pDataIn[i],nwidth*nheight*pRrmSpc->info()->dataSize()));
-		   checkCudaErrors(cudaMalloc((void**)&pDataInType[i],strlen(pRrmSpc->info()->dataType())+1));
+		   //checkCudaErrors(cudaMalloc((void**)&pDataInType[i],strlen(pRrmSpc->info()->dataType())+1));
 		//  checkCudaErrors(cudaMemcpy(pDataIn[i],pRrmSpc->getData<void>(),nwidth*nheight*pRrmSpc->info()->dataSize(),cudaMemcpyHostToDevice));
 		   pDataIn[i]=pRrmSpc->getGPUData();
-		   checkCudaErrors(cudaMemcpy(pDataInType[i],pRrmSpc->info()->dataType(),strlen(pRrmSpc->info()->dataType())+1,cudaMemcpyHostToDevice));
+		   pDataInType[i]=pRrmSpc->info()->cudaTypeCopy();
+	//	   cout<< pDataInType[i]<<endl;
+		   //checkCudaErrors(cudaMemcpy(pDataInType[i],pRrmSpc->info()->dataType(),strlen(pRrmSpc->info()->dataType())+1,cudaMemcpyHostToDevice));
 	  }
 	  for(int i=0;i<numOutRaster;i++)
 	  {
@@ -340,22 +356,24 @@ namespace pRPL {
 		  outdata[i]=new char[nwidth*nheight*pRrmSpc->info()->dataSize()];
 		//  checkCudaErrors(cudaMalloc((void**)&pDataOut[i],nwidth*nheight*pRrmSpc->info()->dataSize()));
 		  pDataOut[i]=pRrmSpc->getGPUData();
-		  checkCudaErrors(cudaMalloc((void**)&pDataOutType[i],strlen(pRrmSpc->info()->dataType())+1));
-		  checkCudaErrors(cudaMemcpy(pDataOutType[i],pRrmSpc->info()->dataType(),strlen(pRrmSpc->info()->dataType())+1,cudaMemcpyHostToDevice));
+		 // checkCudaErrors(cudaMalloc((void**)&pDataOutType[i],strlen(pRrmSpc->info()->dataType())+1));
+		 // checkCudaErrors(cudaMemcpy(pDataOutType[i],pRrmSpc->info()->dataType(),strlen(pRrmSpc->info()->dataType())+1,cudaMemcpyHostToDevice));
+		  pDataOutType[i]=pRrmSpc->info()->cudaTypeCopy();
+	//	  cout<< pDataOutType[i]<<endl;
 	  }
+	  checkCudaErrors(cudaMalloc(&d_pDataInType,sizeof(int)*numInRaster));
+	  checkCudaErrors(cudaMemcpy(d_pDataInType,pDataInType,sizeof(int)*numInRaster,cudaMemcpyHostToDevice));
+	  checkCudaErrors(cudaMalloc(&d_pDataOutType,sizeof(int)*numOutRaster));
+	  checkCudaErrors(cudaMemcpy(d_pDataOutType,pDataOutType,sizeof(int)*numOutRaster,cudaMemcpyHostToDevice));
 	  checkCudaErrors(cudaMalloc((void***)&d_pDataIn,sizeof(void*)*numInRaster));
 	  checkCudaErrors(cudaMalloc((void***)&d_pDataOut,sizeof(void*)*numOutRaster));
-	   checkCudaErrors(cudaMalloc((void***)&d_pDataInType,sizeof(void*)*numInRaster));
-	    checkCudaErrors(cudaMalloc((void***)&d_pDataOutType,sizeof(void*)*numOutRaster));
+	 //  checkCudaErrors(cudaMalloc((void***)&d_pDataInType,sizeof(void*)*numInRaster));
+	 //   checkCudaErrors(cudaMalloc((void***)&d_pDataOutType,sizeof(void*)*numOutRaster));
 	  checkCudaErrors(cudaMemcpy(d_pDataIn,pDataIn,sizeof(void*)*numInRaster,cudaMemcpyHostToDevice));
 	  checkCudaErrors(cudaMemcpy(d_pDataOut,pDataOut,sizeof(void*)*numOutRaster,cudaMemcpyHostToDevice));
-	  checkCudaErrors(cudaMemcpy(d_pDataInType,pDataInType,sizeof(void*)*numInRaster,cudaMemcpyHostToDevice));
-	  checkCudaErrors(cudaMemcpy(d_pDataOutType,pDataOutType,sizeof(void*)*numOutRaster,cudaMemcpyHostToDevice));
-	  checkCudaErrors(cudaMemcpy(d_nbrcoord,cucoords, sizeof(int)*nbrsize * 2, cudaMemcpyHostToDevice));
-	  checkCudaErrors( cudaMemcpy(d_weights, weights, sizeof(double)*nbrsize, cudaMemcpyHostToDevice));
-	  dim3 block(16,16);
-	  dim3 grid(nwidth% 16 == 0 ? nwidth /16 : nwidth / 16 + 1, nheight % 16 == 0 ? nheight /16 : nheight /16 + 1);
-	  G_FocalMutiOperator<OperType> <<< grid,block>>> (d_pDataIn,d_pDataInType, d_pDataOut, d_pDataOutType, brminIRow, brmaxIRow,brminICol, brmaxICol,nwidth, nheight,d_nbrcoord,d_weights,   nbrsize, cellWidth, cellHeight, OperType());
+	  int block=256;
+	  int gird=_smCount*24;                                      
+	  G_GlobalMutiOperator<OperType> <<< gird,block>>> (d_pDataIn,d_pDataInType, d_pDataOut, d_pDataOutType, brminIRow, brmaxIRow,brminICol, brmaxICol,nwidth, nheight, cellWidth, cellHeight,d_paramInfo, d_globalcoord,OperType());
 	  cudaDeviceSynchronize();
 	  
 	  for(int i=0;i<numOutRaster;i++)
@@ -385,22 +403,24 @@ namespace pRPL {
 		  delete []outdata[i];
 		//  getCellspaceByLyrName(getOutLyrNames()[i])->deleteGPUDATA();
 		//  cudaFree(pDataOut[i]);
-		   cudaFree(pDataOutType[i]);
+		  // cudaFree(pDataOutType);
 	  }
 	  for(int i=0;i<numInRaster;i++)
 	  {
 		 // cudaFree(pDataIn[i]);
 		   //getCellspaceByLyrName(getInLyrNames()[i])->deleteGPUDATA();
-		  cudaFree(pDataInType[i]);
+		 // cudaFree(pDataInType[i]);
 	  }
-	  cudaFree(d_weights);
-	  cudaFree(d_nbrcoord);
+	  cudaFree(d_pDataInType);
+	  cudaFree(d_pDataOutType);
+	  checkCudaErrors(cudaFree(d_paramInfo));
+	  cudaFree(d_globalcoord);
 	  return pRPL::EVAL_SUCCEEDED;
 
   }
 
   //2018/10/18
-  template<class DataInType, class DataOutType, class OperType>
+  template<class OperType>
   pRPL::EvaluateReturn pRPL::Transition::cuZonelOperator(const pRPL::CoordBR &br)
   {
 	 int brminIRow=br.minIRow();
@@ -448,7 +468,7 @@ namespace pRPL {
 		  pRrmSpc=getCellspaceByLyrName(getInLyrNames()[i]);
 		   pDataIn[i]=pRrmSpc->getGPUData();
 		   pDataInType[i]=pRrmSpc->info()->cudaTypeCopy();
-		   cout<< pDataInType[i]<<endl;
+	//	   cout<< pDataInType[i]<<endl;
 	  }
 	  for(int i=0;i<numOutRaster;i++)
 	  {
@@ -456,7 +476,7 @@ namespace pRPL {
 		  outdata[i]=new char[nwidth*nheight*pRrmSpc->info()->dataSize()];
 		  pDataOut[i]=pRrmSpc->getGPUData();
 		  pDataOutType[i]=pRrmSpc->info()->cudaTypeCopy();
-		  cout<< pDataOutType[i]<<endl;
+	//	  cout<< pDataOutType[i]<<endl;
 	  }
 	  checkCudaErrors(cudaMalloc(&d_pDataInType,sizeof(int)*numInRaster));
 	  checkCudaErrors(cudaMemcpy(d_pDataInType,pDataInType,sizeof(int)*numInRaster,cudaMemcpyHostToDevice));
@@ -468,9 +488,11 @@ namespace pRPL {
 	  checkCudaErrors(cudaMemcpy(d_pDataOut,pDataOut,sizeof(void*)*numOutRaster,cudaMemcpyHostToDevice));
 	  //checkCudaErrors(cudaMemcpy(d_nbrcoord,cucoords, sizeof(int)*nbrsize * 2, cudaMemcpyHostToDevice));
 	  //checkCudaErrors( cudaMemcpy(d_weights, weights, sizeof(double)*nbrsize, cudaMemcpyHostToDevice));
-	  dim3 block(16,16);
-	  dim3 grid(nwidth% 16 == 0 ? nwidth /16 : nwidth / 16 + 1, nheight % 16 == 0 ? nheight /16 : nheight /16 + 1);
-	  G_ZonalMutiOperator<OperType> <<< 256,256>>> (d_pDataIn,d_pDataInType, d_pDataOut, d_pDataOutType, nwidth, nheight, cellWidth, cellHeight,d_paramInfo, OperType());
+	 // dim3 block(16,16);
+	//  dim3 grid(nwidth% 16 == 0 ? nwidth /16 : nwidth / 16 + 1, nheight % 16 == 0 ? nheight /16 : nheight /16 + 1);
+	  int block=256;
+	  int gird=_smCount*24;
+	  G_ZonalMutiOperator<OperType> <<<gird,block>>> (d_pDataIn,d_pDataInType, d_pDataOut, d_pDataOutType, nwidth, nheight, cellWidth, cellHeight,d_paramInfo, OperType());
 	  cudaDeviceSynchronize();
 	  
 	  for(int i=0;i<numOutRaster;i++)
@@ -613,7 +635,7 @@ namespace pRPL {
 		  pRrmSpc=getCellspaceByLyrName(getInLyrNames()[i]);
 		   pDataIn[i]=pRrmSpc->getGPUData();
 		   pDataInType[i]=pRrmSpc->info()->cudaTypeCopy();
-		   cout<< pDataInType[i]<<endl;
+	//	   cout<< pDataInType[i]<<endl;
 	  }
 	  for(int i=0;i<numOutRaster;i++)
 	  {
@@ -621,7 +643,7 @@ namespace pRPL {
 		  outdata[i]=new char[nwidth*nheight*pRrmSpc->info()->dataSize()];
 		  pDataOut[i]=pRrmSpc->getGPUData();
 		  pDataOutType[i]=pRrmSpc->info()->cudaTypeCopy();
-		  cout<< pDataOutType[i]<<endl;
+	//	  cout<< pDataOutType[i]<<endl;
 	  }
 	  checkCudaErrors(cudaMalloc(&d_pDataInType,sizeof(int)*numInRaster));
 	  checkCudaErrors(cudaMemcpy(d_pDataInType,pDataInType,sizeof(int)*numInRaster,cudaMemcpyHostToDevice));
@@ -633,9 +655,11 @@ namespace pRPL {
 	  checkCudaErrors(cudaMemcpy(d_pDataOut,pDataOut,sizeof(void*)*numOutRaster,cudaMemcpyHostToDevice));
 	  //checkCudaErrors(cudaMemcpy(d_nbrcoord,cucoords, sizeof(int)*nbrsize * 2, cudaMemcpyHostToDevice));
 	  //checkCudaErrors( cudaMemcpy(d_weights, weights, sizeof(double)*nbrsize, cudaMemcpyHostToDevice));
-	  dim3 block(16,16);
-	  dim3 grid(nwidth% 16 == 0 ? nwidth /16 : nwidth / 16 + 1, nheight % 16 == 0 ? nheight /16 : nheight /16 + 1);
-	  G_LocalMutiOperator<OperType> <<< 256,256>>> (d_pDataIn,d_pDataInType, d_pDataOut, d_pDataOutType, nwidth, nheight, cellWidth, cellHeight,d_paramInfo, OperType());
+	 // dim3 block(16,16);
+	 // dim3 grid(nwidth% 16 == 0 ? nwidth /16 : nwidth / 16 + 1, nheight % 16 == 0 ? nheight /16 : nheight /16 + 1);
+	   int block=256;
+	  int grid=_smCount*24;
+	  G_LocalMutiOperator<OperType> <<< grid,block>>> (d_pDataIn,d_pDataInType, d_pDataOut, d_pDataOutType, nwidth, nheight, cellWidth, cellHeight,d_paramInfo, OperType());
 	  cudaDeviceSynchronize();
 	  
 	  for(int i=0;i<numOutRaster;i++)

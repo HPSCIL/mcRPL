@@ -2,11 +2,9 @@
 #include <iostream>
 #include <fstream>
 #include"prplcuda.h"
-#include "FocalOperatorDevice.h"
-#include"aspectTrans.h"
-#include"cuSTARFM.h"
+#include "OperatorDevice.h"
 using namespace std;
-int main()
+int main(int argc, char *argv[])
 {
  // const string usage("usage: pAspect workspace input-demFilename num-row-subspaces num-col-subspaces task-farming(1/0) io-option(0/1/2/3/4) with-writer(1/0)");
 
@@ -36,24 +34,19 @@ int main()
  // cudaMalloc((void**)&d_data, sizeof(int)*10 * 2);
  // cudaMemcpy(d_data,pAtest_host,sizeof(int)*20,cudaMemcpyHostToDevice);
  //  devicePrt(d_data);
- // cudaSetDevice(0);
-  string workspace,firstfineFilename, firstcorseFilename, secondcorseFilename,secondfineFilename,secondfineFilename2;
+  string workspace,firstfineFilename, firstcorseFilename, secondcorseFilename,secondfineFilename;
   //workspace.assign(argv[1]);
   //demFilename.assign(workspace + argv[2]);
-  //int nRowSubspcs = atoi(argv[3]);
-  //int nColSubspcs = atoi(argv[4]);
+  int nRowSubspcs = atoi(argv[1]);
+  int nColSubspcs = atoi(argv[2]);
   //bool taskFarming = (bool)atoi(argv[5]);
   //int ioOption = atoi(argv[6]);
- // workspace.assign("D:\\data\\newdata");
- // firstfineFilename.assign("D:\\data\\newdata\\L_2002_01_04.tif"); 
-  //firstcorseFilename.assign("D:\\data\\newdata\\M_2002_01_04.tif"); 
-  //secondcorseFilename.assign("D:\\data\\newdata\\M_2002_02_12.tif");
-   workspace.assign("D:\\data\\newdata\\");
-  firstfineFilename.assign("D:\\data\\newdata\\2009-329-flaash.dat"); 
-  firstcorseFilename.assign("D:\\data\\newdata\\MODO9A1.A2009329-0.dat"); 
-  secondcorseFilename.assign("D:\\data\\newdata\\MODO9A1.A2009249.dat");
-  int nRowSubspcs =3;
-  int nColSubspcs = 1;
+  workspace.assign("../input/STARFM_DATA/");
+  firstfineFilename.assign("../input/STARFM_DATA/2009-329-flaash.dat"); 
+  firstcorseFilename.assign("../input/STARFM_DATA/MODO9A1.A2009329-0.dat"); 
+  secondcorseFilename.assign("../input/STARFM_DATA/MODO9A1.A2009249.dat");
+ // int nRowSubspcs =2;
+ // int nColSubspcs = 2;
   bool taskFarming =0;
   int ioOption =3;
   pRPL::ReadingOption readOpt;
@@ -128,37 +121,32 @@ int main()
   long tileSize = pfirstfineLyr->tileSize();
   
   pRPL::Layer *psecondfineLyr = aspDM.addLayer("secondfine");
-  pRPL::Layer *psecondfineLyr2 = aspDM.addLayer("secondfine2");
- psecondfineLyr->initCellspaceInfo(glbDims, typeid( int).name(), sizeof( int), pGlbGeoinfo, tileSize);
- psecondfineLyr2->initCellspaceInfo(glbDims, typeid( int).name(), sizeof( int), pGlbGeoinfo, tileSize);
+ psecondfineLyr->initCellspaceInfo(glbDims, typeid(int).name(), sizeof(int), pGlbGeoinfo, tileSize);
 
   //pRPL::Layer *pAspLyr = aspDM.addLayer("ASP");
  // pAspLyr->initCellspaceInfo(glbDims, typeid(float).name(), sizeof(float), pGlbGeoinfo, tileSize);
   
   // Add a 3X3 Neighborhood to the DataManager
   pRPL::Neighborhood* pNbrhd31x31 = aspDM.addNbrhd("Moore31x31");
-  pNbrhd31x31->initMoore(3, 1.0, pRPL::CUSTOM_VIRTUAL_EDGES, 0);
+  pNbrhd31x31->initMoore(31, 1.0, pRPL::CUSTOM_VIRTUAL_EDGES, 0);
 
   // Declare a Transition
   pRPL::Transition aspTrans;
  // aspTrans.scale(1.0);
   aspTrans.setNbrhdByName(pNbrhd31x31->name());
-  //aspTrans.setNbrhd();
   aspTrans.addInputLyr(pfirstfineLyr->name(), false);
   aspTrans.addInputLyr(psecondcorseLyr->name(), false);
   aspTrans.addInputLyr(pfirstcorseLyr->name(), false);
   aspTrans.addOutputLyr(psecondfineLyr->name(),true);
-  //aspTrans.addOutputLyr(psecondfineLyr2->name(),true);
   //aspTrans.addOutputLyr(pAspLyr->name(), true);
   
   // Decompose the Layers
-  cout << aspDM.mpiPrc().id() << ": decomposing Cellspaces...." << endl;
+  //cout << aspDM.mpiPrc().id() << ": decomposing Cellspaces...." << endl;
   if(!aspDM.dcmpLayers(aspTrans, nRowSubspcs, nColSubspcs)) {
     aspDM.mpiPrc().abort();
     return -1;
   }
-  
-  cout << aspDM.mpiPrc().id() << ": decomposed Cellspaces...." << endl;
+
   aspDM.mpiPrc().sync();
   if(aspDM.mpiPrc().isMaster()) {
     timeInit = MPI_Wtime();
@@ -167,15 +155,10 @@ int main()
   // Create the output datasets
   if(writeOpt != pRPL::NO_WRITING) {
     char nPrcs[10]; sprintf(nPrcs, "%d", aspDM.mpiPrc().nProcesses());
-    secondfineFilename.assign(workspace + "test_" + "TEST_"+nPrcs + ".tif");
-	secondfineFilename2.assign(workspace + "test2_" + "TEST_"+nPrcs + ".tif");
+    secondfineFilename.assign(workspace + "custarfm_" + "TEST_"+nPrcs + ".tif");
     //aspectFilename.assign(workspace + "asp_" +"TEST_"+ nPrcs + ".tif");
     if(writeOpt == pRPL::PGTDEL_WRITING) {
 		if(!aspDM.createLayerPGTIOL(psecondfineLyr->name(), secondfineFilename.c_str(), NULL) ) {
-        aspDM.mpiPrc().abort();
-        return -1;
-      }
-		if(!aspDM.createLayerPGTIOL(psecondfineLyr2->name(), secondfineFilename2.c_str(), NULL) ) {
         aspDM.mpiPrc().abort();
         return -1;
       }
@@ -185,15 +168,10 @@ int main()
         aspDM.mpiPrc().abort();
         return -1;
       }
-	  if(!aspDM.createLayerGDAL(psecondfineLyr2->name(), secondfineFilename2.c_str(), "GTiff", NULL) ) {
-        aspDM.mpiPrc().abort();
-        return -1;
-      }
     }
   }
   pRPL::pCuf pf;
   pf=&pRPL::Transition::cuFocalMutiOperator<cuSTARFM>;
-  //pf=&pRPL::Transition::cuLocalOperator<Copy>;
   //  pf=&pRPL::Transition::cuFocalOperator<short,float, float,SlopeMPI>;
  // InitCUDA(aspDM.mpiPrc().id()); 
   aspDM.mpiPrc().sync();
@@ -226,9 +204,9 @@ int main()
     }
 
     aspDM.mpiPrc().sync();
-    //if(aspDM.mpiPrc().isMaster()) {
-    //  timeRead = MPI_Wtime();
-    //}
+    if(aspDM.mpiPrc().isMaster()) {
+      timeRead = MPI_Wtime();
+    }
 
     //cout << aspDM.mpiPrc().id() << ": static tasking...." << endl;
 	if(aspDM.evaluate_ST(pRPL::EVAL_ALL, aspTrans, writeOpt,true, pf,false) != pRPL::EVAL_SUCCEEDED) {

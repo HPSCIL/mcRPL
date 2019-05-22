@@ -46,7 +46,8 @@ evaluate_ST(pRPL::EvaluateType evalType,
     _prc.abort();
     return pRPL::EVAL_FAILED;
   }
-
+  int nSMcount=_prc.getDeive().getDeviceinfo()->smCount();
+  trans.setSMcount(nSMcount);
   if(trans.needExchange()) {
     if(!_calcExchangeBRs(trans) ||
        !_calcExchangeRoutes(trans)) {

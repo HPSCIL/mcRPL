@@ -68,7 +68,7 @@ __device__ bool cuisValid(long index,long dimLong);
  }
  ;
  template<class DataType>
- __device__ DataType cuupdateCellAs(long index,int i,void **p,int oldDataType,long dimLong,const DataType &val)
+ __device__ void  cuupdateCellAs(long index,int i,void **p,int oldDataType,long dimLong,const DataType &val)
  {
 	 if(cuisValid(index,dimLong))
 	 {

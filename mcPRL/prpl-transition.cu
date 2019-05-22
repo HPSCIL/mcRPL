@@ -10,7 +10,8 @@ Transition(bool onlyUpdtCtrCell,
     :_pNbrhd(NULL),
      _onlyUpdtCtrCell(onlyUpdtCtrCell),
      _needExchange(needExchange),
-     _edgesFirst(edgesFirst) {}
+     _edgesFirst(edgesFirst),
+     _smCount(20){}
 
 void pRPL::Transition::
 addInputLyr(const char *aInLyrName,
@@ -195,7 +196,11 @@ clearLyrSettings() {
   _primeLyrName.clear();
   _mpCellspcs.clear();
 }
-
+void pRPL::Transition::
+setSMcount(int _sm)
+{
+	_smCount=_sm;
+}
 bool pRPL::Transition::
 setCellspace(const string &lyrName,
              pRPL::Cellspace *pCellspc) {
@@ -226,6 +231,46 @@ clearCellspaces() {
     itrCellspc->second = NULL;
     itrCellspc++;
   }
+}
+bool pRPL::Transition::
+initGlobalCoords(const vector<int> &vGlobalCoords)
+{
+	if(vGlobalCoords.empty())
+	{
+		  cerr << __FILE__ << " function: " << __FUNCTION__ \
+         << " Error: NULL or empty vGlobalCoords to be added to the Transition" \
+         << endl;
+		return false;
+	}
+	int nSize=vGlobalCoords.size();
+	for(int i=0;i<nSize;i++)
+	{
+		_globalCoords.push_back(vGlobalCoords[i]);
+	}
+	return true;
+}
+bool pRPL::Transition::
+initGlobalCoords(const vector<pRPL::CellCoord> &vGlobalCoords)
+{
+	if(vGlobalCoords.empty())
+	{
+		  cerr << __FILE__ << " function: " << __FUNCTION__ \
+         << " Error: NULL or empty vGlobalCoords to be added to the Transition" \
+         << endl;
+		return false;
+	}
+	int nSize=vGlobalCoords.size();
+	for(int i=0;i<nSize;i++)
+	{
+		_globalCoords.push_back(vGlobalCoords[i].iCol());
+		_globalCoords.push_back(vGlobalCoords[i].iRow());
+	}
+	return true;
+}
+void pRPL::Transition::
+	clearGlobalCoords()
+{
+	_globalCoords.clear();
 }
 void pRPL::Transition::
 clearGPUMem()

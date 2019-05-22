@@ -4,7 +4,7 @@
 #include "prpl-basicTypes.h"
 #include "prpl-cellspaceInfo.h"
 #include "prpl-neighborhood.h"
-#include <random>
+#include <chrono>
 //#include <boost/chrono/include.hpp>
 using namespace std;
 
@@ -1880,24 +1880,24 @@ template<class InputType>
 bool pRPL::Cellspace::
 createrandForCellsAs(long ncols, long nrows)
 {
-	//  std::default_random_engine _randomGen;
- //     std::uniform_real_distribution<float> *_pRandomDistribution;
-	//_randomGen.seed(boost::chrono::system_clock::now().time_since_epoch().count());
-	//_pRandomDistribution = new std::uniform_real_distribution<float>(0.0, 1.0);
-	// bool done = true;
-	//for(int _ncol=0;_ncol<ncols;_ncol++)
-	//{
-	//	for(int _nrow=0;_nrow<nrows;_nrow++)
-	//	{
-	//		//srand((int)time(0));
-	//		InputType nRand;
-	//			nRand=(InputType) (*_pRandomDistribution)(_randomGen);
-	//		//	cout<<nRand<<endl;
-	//		InputType &cellVal = (InputType &)(*((InputType*)_pData + _nrow*ncols + _ncol));
-	//		 cellVal = nRand;
-	//	}
-	//}
-	return true;
+	  std::default_random_engine _randomGen;
+     std::uniform_real_distribution<float> *_pRandomDistribution;
+	_randomGen.seed(chrono::system_clock::now().time_since_epoch().count());
+	_pRandomDistribution = new std::uniform_real_distribution<float>(0.0, 1.0);
+	 bool done = true;
+	for(int _ncol=0;_ncol<ncols;_ncol++)
+	{
+		for(int _nrow=0;_nrow<nrows;_nrow++)
+		{
+			//srand((int)time(0));
+		InputType nRand;
+				nRand=(InputType) (*_pRandomDistribution)(_randomGen);
+			//	cout<<nRand<<endl;
+			InputType &cellVal = (InputType &)(*((InputType*)_pData + _nrow*ncols + _ncol));
+			 cellVal = nRand;
+		}
+	}
+	return done;
 	
 }
 template <class RtrType> 
