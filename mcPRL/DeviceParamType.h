@@ -22,7 +22,7 @@ struct rasterCell
 	int y;
 	int value;
 };
-namespace pRPL
+namespace mcPRL
 {
 	//#define EPSINON 1e-06
 

@@ -6,7 +6,7 @@
 #include "LocalOperatorDevice.h"
 #include "LocalCodeOperator.h"
 
-namespace pRPL
+namespace mcPRL
 {
 	template<class DataInType,class DataOutType>
 	CuLayer<DataOutType> abs(CuLayer<DataInType>& culayer)

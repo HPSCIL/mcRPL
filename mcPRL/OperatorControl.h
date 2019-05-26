@@ -4,7 +4,7 @@
 #include "CuLayer.h"
 #include <queue>
 
-namespace pRPL
+namespace mcPRL
 {
 	template<class DataType> class CuLayer;
 

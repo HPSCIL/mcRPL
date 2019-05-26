@@ -1,7 +1,7 @@
-#include "prpl-dataManager.h"
+#include "mcPRL-dataManager.h"
 #include <iostream>
 #include <fstream>
-#include"prplcuda.h"
+#include"mcPRLcuda.h"
 #include "OperatorDevice.h"
 using namespace std;
 int main(int argc, char *argv[])
@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
   // Declare a DataManager and initialize MPI
  // bool withWriter = (bool)atoi(argv[argc-1]);
   bool withWriter = 0;
-  pRPL::DataManager aspDM;
+  mcPRL::DataManager aspDM;
   if(!aspDM.initMPI(MPI_COMM_WORLD, withWriter)) {
     cerr << "Error: unable to initialize MPI" << endl;
     return -1;
@@ -49,43 +49,43 @@ int main(int argc, char *argv[])
  // int nColSubspcs = 2;
   bool taskFarming =0;
   int ioOption =3;
-  pRPL::ReadingOption readOpt;
-  pRPL::WritingOption writeOpt;
+  mcPRL::ReadingOption readOpt;
+  mcPRL::WritingOption writeOpt;
   string sReadOpt, sWriteOpt;
   switch(ioOption) {
     case 0:
-      readOpt = pRPL::CENTDEL_READING;
-      writeOpt = pRPL::NO_WRITING;
+      readOpt = mcPRL::CENTDEL_READING;
+      writeOpt = mcPRL::NO_WRITING;
       sReadOpt = "CENTDEL_READING";
       sWriteOpt = "NO_WRITING";
       break;
     case 1:
-      readOpt = pRPL::PARA_READING;
-      writeOpt = pRPL::NO_WRITING;
+      readOpt = mcPRL::PARA_READING;
+      writeOpt = mcPRL::NO_WRITING;
       sReadOpt = "PARA_READING";
       sWriteOpt = "NO_WRITING";
       break;
     case 2:
-      readOpt = pRPL::PGT_READING;
-      writeOpt = pRPL::NO_WRITING;
+      readOpt = mcPRL::PGT_READING;
+      writeOpt = mcPRL::NO_WRITING;
       sReadOpt = "PGT_READING";
       sWriteOpt = "NO_WRITING";
       break;
     case 3:
-      readOpt = pRPL::CENTDEL_READING;
-      writeOpt = pRPL::CENTDEL_WRITING;
+      readOpt = mcPRL::CENTDEL_READING;
+      writeOpt = mcPRL::CENTDEL_WRITING;
       sReadOpt = "CENTDEL_READING";
       sWriteOpt = "CENTDEL_WRITING";
       break;
     case 4:
-      readOpt = pRPL::PARA_READING;
-      writeOpt = pRPL::PARADEL_WRITING;
+      readOpt = mcPRL::PARA_READING;
+      writeOpt = mcPRL::PARADEL_WRITING;
       sReadOpt = "PARA_READING";
       sWriteOpt = "PARADEL_WRITING";
       break;
     case 5:
-      readOpt = pRPL::PGT_READING;
-      writeOpt = pRPL::PGTDEL_WRITING;
+      readOpt = mcPRL::PGT_READING;
+      writeOpt = mcPRL::PGTDEL_WRITING;
       sReadOpt = "PGT_READING";
       sWriteOpt = "PGTDEL_WRITING";
       break;
@@ -103,10 +103,10 @@ int main(int argc, char *argv[])
   }
 
   // Add Layers to the DataManager
-  pRPL::Layer *pfirstfineLyr = NULL;
-  pRPL::Layer *pfirstcorseLyr = NULL;
-   pRPL::Layer *psecondcorseLyr = NULL;
-  if(readOpt == pRPL::PGT_READING) {
+  mcPRL::Layer *pfirstfineLyr = NULL;
+  mcPRL::Layer *pfirstcorseLyr = NULL;
+   mcPRL::Layer *psecondcorseLyr = NULL;
+  if(readOpt == mcPRL::PGT_READING) {
     pfirstfineLyr = aspDM.addLayerByPGTIOL("firstfine", firstfineFilename.c_str(), 3, true);
 	pfirstcorseLyr = aspDM.addLayerByPGTIOL("firstcorse", firstcorseFilename.c_str(), 1, true);
 	psecondcorseLyr = aspDM.addLayerByPGTIOL("secondcorse", secondcorseFilename.c_str(), 1, true);
@@ -116,22 +116,22 @@ int main(int argc, char *argv[])
 	pfirstcorseLyr = aspDM.addLayerByGDAL("firstcorse", firstcorseFilename.c_str(), 1, true);
 	psecondcorseLyr = aspDM.addLayerByGDAL("secondcorse",  secondcorseFilename.c_str(), 1, true);
   }
-  const pRPL::SpaceDims &glbDims = *(pfirstfineLyr->glbDims());
-  const pRPL::CellspaceGeoinfo *pGlbGeoinfo = pfirstfineLyr->glbGeoinfo();
+  const mcPRL::SpaceDims &glbDims = *(pfirstfineLyr->glbDims());
+  const mcPRL::CellspaceGeoinfo *pGlbGeoinfo = pfirstfineLyr->glbGeoinfo();
   long tileSize = pfirstfineLyr->tileSize();
   
-  pRPL::Layer *psecondfineLyr = aspDM.addLayer("secondfine");
+  mcPRL::Layer *psecondfineLyr = aspDM.addLayer("secondfine");
  psecondfineLyr->initCellspaceInfo(glbDims, typeid(int).name(), sizeof(int), pGlbGeoinfo, tileSize);
 
-  //pRPL::Layer *pAspLyr = aspDM.addLayer("ASP");
+  //mcPRL::Layer *pAspLyr = aspDM.addLayer("ASP");
  // pAspLyr->initCellspaceInfo(glbDims, typeid(float).name(), sizeof(float), pGlbGeoinfo, tileSize);
   
   // Add a 3X3 Neighborhood to the DataManager
-  pRPL::Neighborhood* pNbrhd31x31 = aspDM.addNbrhd("Moore31x31");
-  pNbrhd31x31->initMoore(31, 1.0, pRPL::CUSTOM_VIRTUAL_EDGES, 0);
+  mcPRL::Neighborhood* pNbrhd31x31 = aspDM.addNbrhd("Moore31x31");
+  pNbrhd31x31->initMoore(31, 1.0, mcPRL::CUSTOM_VIRTUAL_EDGES, 0);
 
   // Declare a Transition
-  pRPL::Transition aspTrans;
+  mcPRL::Transition aspTrans;
  // aspTrans.scale(1.0);
   aspTrans.setNbrhdByName(pNbrhd31x31->name());
   aspTrans.addInputLyr(pfirstfineLyr->name(), false);
@@ -153,11 +153,11 @@ int main(int argc, char *argv[])
   }
 
   // Create the output datasets
-  if(writeOpt != pRPL::NO_WRITING) {
+  if(writeOpt != mcPRL::NO_WRITING) {
     char nPrcs[10]; sprintf(nPrcs, "%d", aspDM.mpiPrc().nProcesses());
     secondfineFilename.assign(workspace + "custarfm_" + "TEST_"+nPrcs + ".tif");
     //aspectFilename.assign(workspace + "asp_" +"TEST_"+ nPrcs + ".tif");
-    if(writeOpt == pRPL::PGTDEL_WRITING) {
+    if(writeOpt == mcPRL::PGTDEL_WRITING) {
 		if(!aspDM.createLayerPGTIOL(psecondfineLyr->name(), secondfineFilename.c_str(), NULL) ) {
         aspDM.mpiPrc().abort();
         return -1;
@@ -170,9 +170,9 @@ int main(int argc, char *argv[])
       }
     }
   }
-  pRPL::pCuf pf;
-  pf=&pRPL::Transition::cuFocalMutiOperator<cuSTARFM>;
-  //  pf=&pRPL::Transition::cuFocalOperator<short,float, float,SlopeMPI>;
+  mcPRL::pCuf pf;
+  pf=&mcPRL::Transition::cuFocalMutiOperator<cuSTARFM>;
+  //  pf=&mcPRL::Transition::cuFocalOperator<short,float, float,SlopeMPI>;
  // InitCUDA(aspDM.mpiPrc().id()); 
   aspDM.mpiPrc().sync();
   if(aspDM.mpiPrc().isMaster()) {
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
     // Initialize task farming
     //cout << aspDM.mpiPrc().id() << ": initializing task farm...." << endl;
     int nSubspcs2Map = withWriter ? 2*(aspDM.mpiPrc().nProcesses()-2) : 2*(aspDM.mpiPrc().nProcesses()-1);
-    if(!aspDM.initTaskFarm(aspTrans, pRPL::CYLC_MAP, nSubspcs2Map, readOpt)) {
+    if(!aspDM.initTaskFarm(aspTrans, mcPRL::CYLC_MAP, nSubspcs2Map, readOpt)) {
       return -1;
     }
 
@@ -193,13 +193,13 @@ int main(int argc, char *argv[])
 	
     // Task farming
     //cout << aspDM.mpiPrc().id() << ": task farming...." << endl;
-	if(aspDM.evaluate_TF(pRPL::EVAL_ALL, aspTrans, readOpt, writeOpt,NULL, false, false) != pRPL::EVAL_SUCCEEDED) {
+	if(aspDM.evaluate_TF(mcPRL::EVAL_ALL, aspTrans, readOpt, writeOpt,NULL, false, false) != mcPRL::EVAL_SUCCEEDED) {
       return -1;
     }
   }
   else {
     //cout << aspDM.mpiPrc().id() << ": initializing static tasking...." << endl;
-    if(!aspDM.initStaticTask(aspTrans, pRPL::CYLC_MAP, readOpt)) {
+    if(!aspDM.initStaticTask(aspTrans, mcPRL::CYLC_MAP, readOpt)) {
       return -1;
     }
 
@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
     }
 
     //cout << aspDM.mpiPrc().id() << ": static tasking...." << endl;
-	if(aspDM.evaluate_ST(pRPL::EVAL_ALL, aspTrans, writeOpt,true, pf,false) != pRPL::EVAL_SUCCEEDED) {
+	if(aspDM.evaluate_ST(mcPRL::EVAL_ALL, aspTrans, writeOpt,true, pf,false) != mcPRL::EVAL_SUCCEEDED) {
       return -1;
     }
   }

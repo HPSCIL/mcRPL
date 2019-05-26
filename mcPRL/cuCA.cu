@@ -1,8 +1,8 @@
 //
-#include "prpl-dataManager.h"
+#include "mcPRL-dataManager.h"
 #include <iostream>
 #include <fstream>
-#include"prplcuda.h"
+#include"mcPRLcuda.h"
 #include "OperatorDevice.h"
 //#include"cuLogisticCA.h"
 using namespace std;
@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   const string usage("usage: pCCA workspace number-of-urbanization-per-year number-of-years output-option(0/1/2) num-row-subspaces num-col-subspaces task-farming(1/0) parallelIO(1/0) with-writer(1/0)");
   
   bool withWriter = (bool)atoi(argv[argc-1]);
-  pRPL::DataManager caDM;
+  mcPRL::DataManager caDM;
   if(!caDM.initMPI(MPI_COMM_WORLD, withWriter)) {
     cerr << "Error: unable to initialize MPI" << endl;
     return -1;
@@ -38,13 +38,13 @@ int main(int argc, char *argv[]) {
   int nColSubspcs = atoi(argv[6]);
   bool taskFarming = (bool)atoi(argv[7]);
   bool parallelIO = (bool)atoi(argv[8]);
-  pRPL::ReadingOption readOpt = parallelIO ? pRPL::PARA_READING : pRPL::CENTDEL_READING;
-  pRPL::WritingOption writeOpt;
+  mcPRL::ReadingOption readOpt = parallelIO ? mcPRL::PARA_READING : mcPRL::CENTDEL_READING;
+  mcPRL::WritingOption writeOpt;
   if(opOption != 0) {
-    writeOpt = parallelIO ? pRPL::PARA_WRITING : pRPL::CENT_WRITING;
+    writeOpt = parallelIO ? mcPRL::PARA_WRITING : mcPRL::CENT_WRITING;
   }
   else {
-    writeOpt = pRPL::NO_WRITING;
+    writeOpt = mcPRL::NO_WRITING;
   }
   char nPrcs[10]; sprintf(nPrcs, "%d", caDM.mpiPrc().nProcesses());
   // Record the start time
@@ -67,33 +67,33 @@ int main(int argc, char *argv[]) {
   const char *aFormatName = "GTiff";
 
   /* ----------------------- Initialize Layers ----------------------- */
-  pRPL::Layer *pUrban0 = caDM.addLayerByGDAL("URBAN0", urbanFile.c_str(), 1, true);
-  const pRPL::SpaceDims &glbDims = *(pUrban0->glbDims());
-  const pRPL::CellspaceGeoinfo *pGlbGeoinfo = pUrban0->glbGeoinfo();
+  mcPRL::Layer *pUrban0 = caDM.addLayerByGDAL("URBAN0", urbanFile.c_str(), 1, true);
+  const mcPRL::SpaceDims &glbDims = *(pUrban0->glbDims());
+  const mcPRL::CellspaceGeoinfo *pGlbGeoinfo = pUrban0->glbGeoinfo();
 
-  pRPL::Layer *pLandUse = caDM.addLayerByGDAL(_aInputNames[0], landuseFile.c_str(), 1, true);
-  pRPL::Layer *pElev = caDM.addLayerByGDAL(_aInputNames[1], elevFile.c_str(), 1, true);
-  pRPL::Layer *pSlope = caDM.addLayerByGDAL(_aInputNames[2], slopeFile.c_str(), 1, true);
-  pRPL::Layer *pDist2CityCtr = caDM.addLayerByGDAL(_aInputNames[3], dist2CityCtrFile.c_str(), 1, true);
-  pRPL::Layer *pDist2Transp = caDM.addLayerByGDAL(_aInputNames[4], dist2TranspFile.c_str(), 1, true);
-  pRPL::Layer *pExcluded = caDM.addLayerByGDAL("EXCLUDED", excludedFile.c_str(), 1, true);
-  //pRPL::Layer *pGlbProb2 = caDM.addLayerByGDAL("GLBPROB2",  glb2.c_str(), 1, true);   //201811 15£»
-  pRPL::Layer *pGlbProb = caDM.addLayer("GLBPROB");
+  mcPRL::Layer *pLandUse = caDM.addLayerByGDAL(_aInputNames[0], landuseFile.c_str(), 1, true);
+  mcPRL::Layer *pElev = caDM.addLayerByGDAL(_aInputNames[1], elevFile.c_str(), 1, true);
+  mcPRL::Layer *pSlope = caDM.addLayerByGDAL(_aInputNames[2], slopeFile.c_str(), 1, true);
+  mcPRL::Layer *pDist2CityCtr = caDM.addLayerByGDAL(_aInputNames[3], dist2CityCtrFile.c_str(), 1, true);
+  mcPRL::Layer *pDist2Transp = caDM.addLayerByGDAL(_aInputNames[4], dist2TranspFile.c_str(), 1, true);
+  mcPRL::Layer *pExcluded = caDM.addLayerByGDAL("EXCLUDED", excludedFile.c_str(), 1, true);
+  //mcPRL::Layer *pGlbProb2 = caDM.addLayerByGDAL("GLBPROB2",  glb2.c_str(), 1, true);   //201811 15£»
+  mcPRL::Layer *pGlbProb = caDM.addLayer("GLBPROB");
   pGlbProb->initCellspaceInfo(glbDims, typeid(float).name(), sizeof(float), pGlbGeoinfo);
-  pRPL::Layer *pRandNumber=caDM.addLayer("RAND");
-  pRPL::Layer *pJointProb = caDM.addLayer("JOINTPROB");
+  mcPRL::Layer *pRandNumber=caDM.addLayer("RAND");
+  mcPRL::Layer *pJointProb = caDM.addLayer("JOINTPROB");
   pRandNumber->initCellspaceInfo(glbDims,typeid(float).name(),sizeof(float), pGlbGeoinfo);
   pJointProb->initCellspaceInfo(glbDims, typeid(float).name(), sizeof(float), pGlbGeoinfo);
-  //pRPL::Layer *pGlbProb2 = caDM.addLayer("GLBPROB2");
+  //mcPRL::Layer *pGlbProb2 = caDM.addLayer("GLBPROB2");
  // pGlbProb2->initCellspaceInfo(glbDims, typeid(float).name(), sizeof(float), pGlbGeoinfo);
-  pRPL::Layer *pDistDecayProb = caDM.addLayer("DISTDECAYPROB");
+  mcPRL::Layer *pDistDecayProb = caDM.addLayer("DISTDECAYPROB");
   pDistDecayProb->initCellspaceInfo(glbDims, typeid(float).name(), sizeof(float), pGlbGeoinfo);
 
-  pRPL::Layer *pUrban1 = caDM.addLayer("URBAN1");
+  mcPRL::Layer *pUrban1 = caDM.addLayer("URBAN1");
   pUrban1->initCellspaceInfo(glbDims, pUrban0->dataType(), pUrban0->dataSize(), pGlbGeoinfo);
 
   // Add a 3X3 Neighborhood to the DataManager
-  pRPL::Neighborhood* pNbrhd3x3 = caDM.addNbrhd("Moore3x3");
+  mcPRL::Neighborhood* pNbrhd3x3 = caDM.addNbrhd("Moore3x3");
   pNbrhd3x3->initMoore(3, 1.0);
   if(!caDM.dcmpAllLayers(pNbrhd3x3->name(), nRowSubspcs, nColSubspcs)) {
     caDM.mpiPrc().abort();
@@ -105,10 +105,10 @@ int main(int argc, char *argv[]) {
  //       return -1;
  //     }
   /* compute global probability */
-    pRPL::pCuf pf;
-   pf=&pRPL::Transition::cuFocalMutiOperator<cuglbProb>;
+    mcPRL::pCuf pf;
+   pf=&mcPRL::Transition::cuFocalMutiOperator<cuglbProb>;
   cout << caDM.mpiPrc().id() << ": computing global probilities... " << endl;
-  pRPL::Transition  glbProbTrans;
+  mcPRL::Transition  glbProbTrans;
   glbProbTrans.setNbrhdByName(pNbrhd3x3->name());
   for(int iInLyr = 0; iInLyr <5; iInLyr++) {
     glbProbTrans.addInputLyr(_aInputNames[iInLyr], false);
@@ -117,19 +117,19 @@ int main(int argc, char *argv[]) {
  //  double timeInitTasking;
   if(taskFarming) {
     int nSubspcs2Map = withWriter ? 2*(caDM.mpiPrc().nProcesses()-2) : 2*(caDM.mpiPrc().nProcesses()-1);
-    if(!caDM.initTaskFarm(glbProbTrans, pRPL::CYLC_MAP, nSubspcs2Map, readOpt)) {
+    if(!caDM.initTaskFarm(glbProbTrans, mcPRL::CYLC_MAP, nSubspcs2Map, readOpt)) {
       return -1;
     }
 
     // Task farming
     cout << caDM.mpiPrc().id() << ": task farming...." << endl;
-    if(caDM.evaluate_TF(pRPL::EVAL_ALL, glbProbTrans, readOpt, pRPL::NO_WRITING, false) != pRPL::EVAL_SUCCEEDED) {
+    if(caDM.evaluate_TF(mcPRL::EVAL_ALL, glbProbTrans, readOpt, mcPRL::NO_WRITING, false) != mcPRL::EVAL_SUCCEEDED) {
       return -1;
     }
   }
   else {
     cout << caDM.mpiPrc().id() << ": initializing static tasking...." << endl;
-    if(!caDM.initStaticTask(glbProbTrans, pRPL::CYLC_MAP, readOpt)) {
+    if(!caDM.initStaticTask(glbProbTrans, mcPRL::CYLC_MAP, readOpt)) {
       return -1;
     }
  // caDM.mpiPrc().sync();
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
  // }
 	//cudaSetDevice(caDM.mpiPrc().id());
     cout << caDM.mpiPrc().id() << ": static tasking...." << endl;
-	if(caDM.evaluate_ST(pRPL::EVAL_ALL, glbProbTrans, pRPL::NO_WRITING, true,pf,false) != pRPL::EVAL_SUCCEEDED) {
+	if(caDM.evaluate_ST(mcPRL::EVAL_ALL, glbProbTrans, mcPRL::NO_WRITING, true,pf,false) != mcPRL::EVAL_SUCCEEDED) {
       return -1;
     }
   }
@@ -162,15 +162,15 @@ int main(int argc, char *argv[]) {
   }
 
   /* ----------------------- GROWTH ----------------------- */
- pRPL::Transition jointProbTrans;
+ mcPRL::Transition jointProbTrans;
   jointProbTrans.setNbrhdByName(pNbrhd3x3->name());
 
-  pRPL::Transition distDecProbTrans;
+  mcPRL::Transition distDecProbTrans;
   distDecProbTrans.setNbrhdByName(pNbrhd3x3->name());
   distDecProbTrans.addInputLyr(pJointProb->name(), false);
   distDecProbTrans.addOutputLyr(pDistDecayProb->name(), true);
 
- pRPL::Transition consProbTrans;
+ mcPRL::Transition consProbTrans;
   consProbTrans.setNbrhdByName(pNbrhd3x3->name());
 
   // Read input data
@@ -223,8 +223,8 @@ int main(int argc, char *argv[]) {
         caDM.mpiPrc().abort();
         return -1;
       }    */                                                        //½¨ÎÄ¼þ
-	 pf=&pRPL::Transition::cuFocalMutiOperator<jointProb>;
-	 if(caDM.evaluate_ST(pRPL::EVAL_ALL, jointProbTrans, pRPL::NO_WRITING,true, pf,false) != pRPL::EVAL_SUCCEEDED) {
+	 pf=&mcPRL::Transition::cuFocalMutiOperator<jointProb>;
+	 if(caDM.evaluate_ST(mcPRL::EVAL_ALL, jointProbTrans, mcPRL::NO_WRITING,true, pf,false) != mcPRL::EVAL_SUCCEEDED) {
       return -1;
     
 	 }
@@ -250,8 +250,8 @@ int main(int argc, char *argv[]) {
         caDM.mpiPrc().abort();
         return -1;
       }*/
-	 pf=&pRPL::Transition::cuFocalMutiOperator<DistDecayProb>;
-	 if(caDM.evaluate_ST(pRPL::EVAL_ALL, distDecProbTrans, pRPL::NO_WRITING, true,pf,false) != pRPL::EVAL_SUCCEEDED) {
+	 pf=&mcPRL::Transition::cuFocalMutiOperator<DistDecayProb>;
+	 if(caDM.evaluate_ST(mcPRL::EVAL_ALL, distDecProbTrans, mcPRL::NO_WRITING, true,pf,false) != mcPRL::EVAL_SUCCEEDED) {
       return -1;
     }
 	//  caDM.closeDatasets();
@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) {
     resetNumUrbanized();
     sumDistDecayProb(glbSumDistDecayProb);
     convertLimit(nCells2UrbanPerYear);
-    pRPL::WritingOption currentWriteOpt = pRPL::NO_WRITING;
+    mcPRL::WritingOption currentWriteOpt = mcPRL::NO_WRITING;
     if((opOption == 1 && (year-yearStart)%5 == 0)||
        (opOption == 2 && year == yearEnd)) {
       currentWriteOpt = writeOpt;
@@ -283,9 +283,9 @@ int main(int argc, char *argv[]) {
         return -1;
       }
     }
-	pf=&pRPL::Transition::cuFocalMutiOperator<constarined>;
+	pf=&mcPRL::Transition::cuFocalMutiOperator<constarined>;
 	//#ifdef DEBUG
-	if(caDM.evaluate_ST(pRPL::EVAL_ALL, consProbTrans,currentWriteOpt, true,pf,false) != pRPL::EVAL_SUCCEEDED) {
+	if(caDM.evaluate_ST(mcPRL::EVAL_ALL, consProbTrans,currentWriteOpt, true,pf,false) != mcPRL::EVAL_SUCCEEDED) {
       return -1;
     }
 	

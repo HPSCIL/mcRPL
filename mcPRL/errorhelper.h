@@ -7,7 +7,7 @@
 #include "CuPRL.h"
 using namespace std;
 
-namespace pRPL
+namespace mcPRL
 {
 #define printError(msg) \
 	{ \

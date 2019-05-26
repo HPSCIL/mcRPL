@@ -6,7 +6,7 @@
 using namespace std;
 
 
-namespace pRPL
+namespace mcPRL
 {
 	template<class WeightType>
 	struct CuNbr

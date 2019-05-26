@@ -4,7 +4,7 @@
 
 #include "CuPRL.h"
 
-namespace pRPL
+namespace mcPRL
 {
 
 

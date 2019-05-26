@@ -1,7 +1,7 @@
 #ifndef LAYERINFO_H_H
 #define LYAERINFO_H_H
 #include "CuPRL.h"
-namespace pRPL
+namespace mcPRL
 {
 	template<class DataType>
 	class LayerInfo

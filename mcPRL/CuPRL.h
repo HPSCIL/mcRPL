@@ -12,7 +12,7 @@
 #include "errorhelper.h"
 #include "DeviceParamType.h"
 //#include "CuEnvControl.h"
-namespace pRPL
+namespace mcPRL
 {
 
 	
