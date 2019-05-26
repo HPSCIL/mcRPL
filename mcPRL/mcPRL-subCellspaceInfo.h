@@ -1,20 +1,6 @@
 #ifndef mcPRL_SUBCELLSPACEINFO_H
 #define mcPRL_SUBCELLSPACEINFO_H
 
-/***************************************************************************
-* mcPRL-subCellspaceInfo.h
-*
-* Project: mcPRL, v 2.2
-* Purpose: Header file for class mcPRL::SubCellspaceInfo
-* Author:  Qingfeng (Gene) Guan
-* E-mail:  guanqf {at} gmail.com
-****************************************************************************
-* Copyright (c) 2008, Qingfeng Guan
-* NOTE: this library can ONLY be used for EDUCATIONAL and SCIENTIFIC 
-* purposes, NO COMMERCIAL usages are allowed unless the author is 
-* contacted and a permission is granted
-* 
-****************************************************************************/
 
 #include "mcPRL-basicTypes.h"
 #include "mcPRL-neighborhood.h"

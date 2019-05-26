@@ -1,19 +1,6 @@
 #include "mcPRL-subCellspaceInfo.h"
 
-/***************************************************************************
-* mcPRL-subCellspaceInfo.cpp
-*
-* Project: pRPL, v 2.0
-* Purpose: Implementation for class pRPL::SubCellspaceInfo
-* Author:  Qingfeng (Gene) Guan
-* E-mail:  guanqf {at} gmail.com
-****************************************************************************
-* Copyright (c) 2008, Qingfeng Guan
-* NOTE: this library can ONLY be used for EDUCATIONAL and SCIENTIFIC 
-* purposes, NO COMMERCIAL usages are allowed unless the author is 
-* contacted and a permission is granted
-* 
-****************************************************************************/
+
 
 void mcPRL::SubCellspaceInfo::
 _initBRs() {

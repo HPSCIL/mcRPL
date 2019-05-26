@@ -1,20 +1,7 @@
 #ifndef mcPRL_NEIGHBORHOOD_H
 #define mcPRL_NEIGHBORHOOD_H
 
-/***************************************************************************
-* mcPRL-neighborhood.h
-*
-* Project: pRPL, v 2.0
-* Purpose: Header file for class pRPL::Neighborhood
-* Author:  Qingfeng (Gene) Guan
-* E-mail:  guanqf {at} gmail.com
-****************************************************************************
-* Copyright (c) 2008, Qingfeng Guan
-* NOTE: this library can ONLY be used for EDUCATIONAL and SCIENTIFIC 
-* purposes, NO COMMERCIAL usages are allowed unless the author is 
-* contacted and a permission is granted
-* 
-****************************************************************************/
+
 #include "mcPRL-basicTypes.h"
 
 namespace mcPRL {
