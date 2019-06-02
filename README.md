@@ -4,7 +4,7 @@ MPI+CUDA Raster Processing Library (mcRPL) is a C++ programming framework based 
 
 <b>1. To Compile</b> <br>
 ===============================
-Note: this version is not a final release, and some components are still under testsing. The program has been tested on a cluster with four Linux computing nodes (Centos7.0) and eight GPUs, compiled using g++ 4.8.5, OpenMPI 2.1.1,CUDA9.0,GDAL 1.9, and LibTIFF 4.0.9. The makefile (i.e., make_pAspect) will compile a demonstration program, pAspect, which is able to calculate aspect and slope from DEM data in parallel. <br>
+Note: this version is not a final release, and some components are still under testsing. The program has been tested on a cluster with four Linux computing nodes (Centos7.0) and eight GPUs, compiled using g++ 4.8.5, OpenMPI 2.1.1,CUDA9.0,GDAL 1.9, and LibTIFF 4.0.9. The makefile (i.e., make_mcSTARFM) will compile a demonstration program, mcSTARFM. <br>
 (1) Before compiling, make sure MPI, GDAL,CUDA and LibTIFF libraries have been installed. <br>
 (2) Open <b>make_ mcSTARFM</b> and modify the lines that specify the locations of libraries. <br>
 (3) Type 'make -f make_mcSTARFM depend'.<br>
