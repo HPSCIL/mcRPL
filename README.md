@@ -1,6 +1,6 @@
 # mcRPL
 With the development of GPGPU, GPU has natural support and efficient performance for parallel raster computing. Single GPU can achieve good acceleration. However, most of the existing raster parallel computing libraries implement multi-process parallelism based on MPI. A small number of raster parallel computing libraries based on GPU multi-threaded model can not support multi-GPU parallel computing.
-MPI+CUDA parallel raster Library (mcRPL) is a C++ programming framework based on MPI+CUDA. It provides an easy-to-use interface to call multiple GPUs to simultaneously calculate parallel raster/image process. Using this framework, users can easily write efficient parallel algorithms for multi-GPU computing without knowing much about parallel computing.
+MPI+CUDA Raster Processing Library (mcRPL) is a C++ programming framework based on MPI+CUDA. It provides an easy-to-use interface to call multiple GPUs to simultaneously calculate parallel raster/image process. Using this framework, users can easily write efficient parallel algorithms for multi-GPU computing without knowing much about parallel computing.
 
 <b>1. To Compile</b> <br>
 ===============================
