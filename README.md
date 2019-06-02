@@ -1,6 +1,6 @@
-# mcPRL
+# mcRPL
 With the development of GPGPU, GPU has natural support and efficient performance for parallel raster computing. Single GPU can achieve good acceleration. However, most of the existing raster parallel computing libraries implement multi-process parallelism based on MPI. A small number of raster parallel computing libraries based on GPU multi-threaded model can not support multi-GPU parallel computing.
-MPI+CUDA parallel raster Library (mcPRL) is a C++ programming framework based on MPI+CUDA. It provides an easy-to-use interface to call multiple GPUs to simultaneously calculate parallel raster/image process. Using this framework, users can easily write efficient parallel algorithms for multi-GPU computing without knowing much about parallel computing.
+MPI+CUDA parallel raster Library (mcRPL) is a C++ programming framework based on MPI+CUDA. It provides an easy-to-use interface to call multiple GPUs to simultaneously calculate parallel raster/image process. Using this framework, users can easily write efficient parallel algorithms for multi-GPU computing without knowing much about parallel computing.
 
 <b>1. To Compile</b> <br>
 ===============================
@@ -11,7 +11,7 @@ Note: this version is not a final release, and some components are still under t
 (4)  Type 'make -f make_mcSTARFM to compile. <br>
 After successful compilation, an executable file named <b>mcSTARFM</b> will be generated.
 
-<b>2. Key features of mcPRL</b>
+<b>2. Key features of mcRPL</b>
 ===============================
 <br>Supports a wide range of CUDA-enabled GPUs (https://developer.nvidia.com/cuda-gpus)
 <br>Supports a wide range of image formats (see http://gdal.org/formats_list.html)
@@ -40,10 +40,10 @@ mpirun -np 6 -machinefile machinefile  mcSTARFM  ./ 6 1 0 2 0 <br>
 <br>compute-0-0 slots=2
 <br>compute-0-0 slots=2
 <br>hpscil slots=2
-<br>    Note: The computational performance of mcPRL largely depends on the GPUs The more powerful is the GPUs the better performance. The more GPUs the better performance.
+<br>    Note: The computational performance of mcRPL largely depends on the GPUs The more powerful is the GPUs the better performance. The more GPUs the better performance.
 
-## <b>3.3 An example of programming with mcPRL:</b><br>
-To illustrate how to use mcPRL, a simple example is given in the following section.
+## <b>3.3 An example of programming with mcRPL:</b><br>
+To illustrate how to use mcRPL, a simple example is given in the following section.
 <br>In this example，there are two input layers and two output layers. The first output layer is the focal sum of the first input layer with a 3×3 neighborhood. The second output layer is the focal sum of the second input layer with a 3×3 neighborhood.
 + Implementing this algorithm includes the following three steps：
    - Fisrt，You have to implement custom device functions based on the template of neighborhood computation.
@@ -84,7 +84,7 @@ Moore neighborhood ：MooreNbrLocs[16] = {-1, 0, -1, 1, 0, 1, 1, 1, 1, 0, 1, -1,
 int main()
 {
 bool withWriter = 0;
-  mcPRL::DataManager testDM;
+  mcRPL::DataManager testDM;
   if(!testDM.initMPI(MPI_COMM_WORLD, withWriter)) {
     cerr << "Error: unable to initialize MPI" << endl;
     return -1;
@@ -97,43 +97,43 @@ workspace.assign("D:\\data\\newdata\\");
   int nColSubspcs = 1;
   bool taskFarming =0;
   int ioOption =3;
-  mcPRL::ReadingOption readOpt;
-  mcPRL::WritingOption writeOpt;
+  mcRPL::ReadingOption readOpt;
+  mcRPL::WritingOption writeOpt;
   string sReadOpt, sWriteOpt;
   switch(ioOption) {
     case 0:
-      readOpt = mcPRL::CENTDEL_READING;
-      writeOpt = mcPRL::NO_WRITING;
+      readOpt = mcRPL::CENTDEL_READING;
+      writeOpt = mcRPL::NO_WRITING;
       sReadOpt = "CENTDEL_READING";
       sWriteOpt = "NO_WRITING";
       break;
     case 1:
-      readOpt = mcPRL::PARA_READING;
-      writeOpt =mcPRL::NO_WRITING;
+      readOpt = mcRPL::PARA_READING;
+      writeOpt =mcRPL::NO_WRITING;
       sReadOpt = "PARA_READING";
       sWriteOpt = "NO_WRITING";
       break;
     case 2:
-      readOpt = mcPRL::PGT_READING;
-      writeOpt = mcPRL::NO_WRITING;
+      readOpt = mcRPL::PGT_READING;
+      writeOpt = mcRPL::NO_WRITING;
       sReadOpt = "PGT_READING";
       sWriteOpt = "NO_WRITING";
       break;
     case 3:
-      readOpt = mcPRL::CENTDEL_READING;
-      writeOpt = mcPRL::CENTDEL_WRITING;
+      readOpt = mcRPL::CENTDEL_READING;
+      writeOpt = mcRPL::CENTDEL_WRITING;
       sReadOpt = "CENTDEL_READING";
       sWriteOpt = "CENTDEL_WRITING";
       break;
     case 4:
-      readOpt = mcPRL::PARA_READING;
-      writeOpt = mcPRL::PARADEL_WRITING;
+      readOpt = mcRPL::PARA_READING;
+      writeOpt = mcRPL::PARADEL_WRITING;
       sReadOpt = "PARA_READING";
       sWriteOpt = "PARADEL_WRITING";
       break;
     case 5:
-      readOpt = mcPRL::PGT_READING;
-      writeOpt = mcPRL::PGTDEL_WRITING;
+      readOpt = mcRPL::PGT_READING;
+      writeOpt = mcRPL::PGTDEL_WRITING;
       sReadOpt = "PGT_READING";
       sWriteOpt = "PGTDEL_WRITING";
       break;
@@ -147,9 +147,9 @@ double timeStart, timeInit, timeCreate, timeRead, timeEnd;
     //cout << "-------- Start --------" << endl;
     timeStart = MPI_Wtime();
   }
-mcPRL::Layer *fisrtIn = NULL;
-  mcPRL::Layer *secondIn = NULL;
-  if(readOpt == mcPRL::PGT_READING) {
+mcRPL::Layer *fisrtIn = NULL;
+  mcRPL::Layer *secondIn = NULL;
+  if(readOpt == mcRPL::PGT_READING) {
     fisrtIn = testDM.addLayerByPGTIOL("firstfine", firstInName.c_str(), 3, true);
 	secondIn = testDM.addLayerByPGTIOL("secondcorse", secondcorseFilename.c_str(), 1, true);
   }
@@ -157,24 +157,24 @@ mcPRL::Layer *fisrtIn = NULL;
     fisrtIn = testDM.addLayerByGDAL("firstfine", firstInName.c_str(), 3, true);
 	secondIn = testDM.addLayerByGDAL("secondcorse",  secondcorseFilename.c_str(), 1, true);
   }
-  const mcPRL::SpaceDims &glbDims = *(fisrtIn->glbDims());
-  const mcPRL::CellspaceGeoinfo *pGlbGeoinfo = fisrtIn->glbGeoinfo();
+  const mcRPL::SpaceDims &glbDims = *(fisrtIn->glbDims());
+  const mcRPL::CellspaceGeoinfo *pGlbGeoinfo = fisrtIn->glbGeoinfo();
   long tileSize = fisrtIn->tileSize();
   
-  mcPRL::Layer *firstOut = testDM.addLayer("secondfine");
-  mcPRL::Layer *firstOut2 = testDM.addLayer("secondfine2");
+  mcRPL::Layer *firstOut = testDM.addLayer("secondfine");
+  mcRPL::Layer *firstOut2 = testDM.addLayer("secondfine2");
  firstOut->initCellspaceInfo(glbDims, typeid( int).name(), sizeof( int), pGlbGeoinfo, tileSize);
  firstOut2->initCellspaceInfo(glbDims, typeid( int).name(), sizeof( int), pGlbGeoinfo, tileSize);
 
-  //mcPRL::Layer *pAspLyr = testDM.addLayer("ASP");
+  //mcRPL::Layer *pAspLyr = testDM.addLayer("ASP");
  // pAspLyr->initCellspaceInfo(glbDims, typeid(float).name(), sizeof(float), pGlbGeoinfo, tileSize);
   
   // Add a 3X3 Neighborhood to the DataManager
-  mcPRL::Neighborhood* pNbrhd31x31 = testDM.addNbrhd("Moore31x31");
-  pNbrhd31x31->initMoore(3, 1.0, mcPRL::CUSTOM_VIRTUAL_EDGES, 0);
+  mcRPL::Neighborhood* pNbrhd31x31 = testDM.addNbrhd("Moore31x31");
+  pNbrhd31x31->initMoore(3, 1.0, mcRPL::CUSTOM_VIRTUAL_EDGES, 0);
 
   // Declare a Transition
-  mcPRL::Transition aspTrans;
+  mcRPL::Transition aspTrans;
  // aspTrans.scale(1.0);
   aspTrans.setNbrhdByName(pNbrhd31x31->name());
   //aspTrans.setNbrhd();
@@ -197,12 +197,12 @@ mcPRL::Layer *fisrtIn = NULL;
     timeInit = MPI_Wtime();
   }
 // Create the output datasets
-  if(writeOpt != mcPRL::NO_WRITING) {
+  if(writeOpt != mcRPL::NO_WRITING) {
     char nPrcs[10]; sprintf(nPrcs, "%d", testDM.mpiPrc().nProcesses());
     secondfineFilename.assign(workspace + "test_" + "TEST_"+nPrcs + ".tif");
 	secondfineFilename2.assign(workspace + "test2_" + "TEST_"+nPrcs + ".tif");
     //aspectFilename.assign(workspace + "asp_" +"TEST_"+ nPrcs + ".tif");
-    if(writeOpt == mcPRL::PGTDEL_WRITING) {
+    if(writeOpt == mcRPL::PGTDEL_WRITING) {
 		if(!testDM.createLayerPGTIOL(firstOut->name(), secondfineFilename.c_str(), NULL) ) {
         testDM.mpiPrc().abort();
         return -1;
@@ -223,10 +223,10 @@ mcPRL::Layer *fisrtIn = NULL;
       }
     }
   }
-  mcPRL::pCuf pf;
-  pf=&mcPRL::Transition::cuFocalMutiOperator<testFocal>;
-  //pf=&mcPRL::Transition::cuLocalOperator<Copy>;
-  //  pf=&mcPRL::Transition::cuFocalOperator<short,float, float,SlopeMPI>;
+  mcRPL::pCuf pf;
+  pf=&mcRPL::Transition::cuFocalMutiOperator<testFocal>;
+  //pf=&mcRPL::Transition::cuLocalOperator<Copy>;
+  //  pf=&mcRPL::Transition::cuFocalOperator<short,float, float,SlopeMPI>;
  // InitCUDA(testDM.mpiPrc().id()); 
   testDM.mpiPrc().sync();
   if(testDM.mpiPrc().isMaster()) {
@@ -236,7 +236,7 @@ mcPRL::Layer *fisrtIn = NULL;
     // Initialize task farming
     //cout << testDM.mpiPrc().id() << ": initializing task farm...." << endl;
     int nSubspcs2Map = withWriter ? 2*(testDM.mpiPrc().nProcesses()-2) : 2*(testDM.mpiPrc().nProcesses()-1);
-    if(!testDM.initTaskFarm(aspTrans, mcPRL::CYLC_MAP, nSubspcs2Map, readOpt)) {
+    if(!testDM.initTaskFarm(aspTrans, mcRPL::CYLC_MAP, nSubspcs2Map, readOpt)) {
       return -1;
     }
 
@@ -247,13 +247,13 @@ mcPRL::Layer *fisrtIn = NULL;
 	
     // Task farming
     //cout << testDM.mpiPrc().id() << ": task farming...." << endl;
-	if(testDM.evaluate_TF(mcPRL::EVAL_ALL, aspTrans, readOpt, writeOpt,NULL, false, false) != mcPRL::EVAL_SUCCEEDED) {
+	if(testDM.evaluate_TF(mcRPL::EVAL_ALL, aspTrans, readOpt, writeOpt,NULL, false, false) != mcRPL::EVAL_SUCCEEDED) {
       return -1;
     }
   }
   else {
     //cout << testDM.mpiPrc().id() << ": initializing static tasking...." << endl;
-    if(!testDM.initStaticTask(aspTrans, mcPRL::CYLC_MAP, readOpt)) {
+    if(!testDM.initStaticTask(aspTrans, mcRPL::CYLC_MAP, readOpt)) {
       return -1;
     }
 
@@ -263,7 +263,7 @@ mcPRL::Layer *fisrtIn = NULL;
     //}
 
     //cout << testDM.mpiPrc().id() << ": static tasking...." << endl;
-	if(testDM.evaluate_ST(mcPRL::EVAL_ALL, aspTrans, writeOpt,true, pf,false) != mcPRL::EVAL_SUCCEEDED) {
+	if(testDM.evaluate_ST(mcRPL::EVAL_ALL, aspTrans, writeOpt,true, pf,false) != mcRPL::EVAL_SUCCEEDED) {
       return -1;
     }
   }
