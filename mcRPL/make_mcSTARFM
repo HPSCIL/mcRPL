@@ -1,0 +1,20 @@
+CUDA_INSTALL_PATH = /usr/local/cuda-9.0
+MPI_INSTALL_PATH = /opt/openmpi
+NVCC = $(CUDA_INSTALL_PATH)/bin/nvcc  
+MPICC = $(MPI_INSTALL_PATH)/bin/mpic++  
+LIBS =  -L$(CUDA_INSTALL_PATH)/lib64 -lcudart -lcurand -lgdal
+CUDAINCLUDE = -I $(CUDA_INSTALL_PATH)/include
+MPICCINCLUDE = -I $(MPI_INSTALL_PATH)/include
+CFILES = pgtiol-dataset.cpp  pgtiol-gTiffData.cpp  pgtiol-gTiffManager.cpp  pgtiol-gTiffMetaData.cpp mcrpl-basicTypes.cpp mcrpl-cellspaceGeoinfo.cpp mcrpl-cellspaceInfo.cpp mcrpl-cellspace.cpp mcrpl-cellStream.cpp  mcrpl-exchangeMap.cpp mcrpl-layer.cpp mcrpl-neighborhood.cpp mcrpl-ownershipMap.cpp mcrpl-process.cpp mcrpl-smplDcmp.cpp mcrpl-subCellspace.cpp mcrpl-subCellspaceInfo.cpp  
+CUFILES = mcSTARFM_main.cu mcrpl-transition.cu mcrpl-transferInfo.cu mcrpl-dataManager.cu mcSTARFM.cu mcrpl-DevicePara.cu
+OBJECTS =  mcLink.o pgtiol-dataset.o  pgtiol-gTiffData.o  pgtiol-gTiffManager.o  pgtiol-gTiffMetaData.o mcrpl-basicTypes.o mcrpl-cellspaceGeoinfo.o mcrpl-cellspaceInfo.o mcrpl-cellspace.o mcrpl-cellStream.o  mcrpl-exchangeMap.o mcrpl-layer.o mcrpl-neighborhood.o mcrpl-ownershipMap.o mcrpl-process.o mcrpl-smplDcmp.o mcrpl-subCellspace.o mcrpl-subCellspaceInfo.o mcSTARFM_main.o mcrpl-transition.o mcrpl-transferInfo.o mcrpl-dataManager.o mcSTARFM.o mcrpl-DevicePara.o  
+EXECNAME = mcSTARFM  
+  
+all:  
+	$(MPICC) -std=c++11 -c  $(CFILES) $(CUDAINCLUDE)  
+	$(NVCC)  -std=c++11  -rdc=true -c $(CUFILES) $(MPICCINCLUDE)
+	$(NVCC)   -dlink -o mcLink.o mcSTARFM_main.o mcrpl-transition.o mcrpl-transferInfo.o mcrpl-dataManager.o mcSTARFM.o mcrpl-DevicePara.o 
+	$(MPICC)  -o $(EXECNAME) $(LIBS) $(OBJECTS)  
+  
+clean:  
+	rm -f *.o$(EXECNAME)
